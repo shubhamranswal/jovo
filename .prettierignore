@@ -1,0 +1,15 @@
+.venv/
+node_modules/
+dist/
+build/
+.next/
+out/
+.turbo/
+package-lock.json
+next-env.d.ts
+**/next-env.d.ts
+
+# Locked specification documents
+AGENTS.md
+PRODUCT_SPEC.md
+IMPLEMENTATION_SPEC.md

@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: jobos-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-jobos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobos_password}
+      POSTGRES_DB: ${POSTGRES_DB:-jobos}
+    ports:
+      - "5432:5432"
+    volumes:
+      - jobos_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    container_name: jobos-api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-jobos}:${POSTGRES_PASSWORD:-jobos_password}@db:5432/${POSTGRES_DB:-jobos}
+      ENVIRONMENT: development
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  jobos_pgdata:

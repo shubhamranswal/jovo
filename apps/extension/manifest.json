@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "JobOS Application Assistant",
+  "version": "0.1.0",
+  "description": "Apply anywhere. Forget nothing. Application memory and evidence-grounded autofill.",
+  "permissions": ["activeTab", "storage", "tabs"],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*", "http://*/*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "dist/popup.html",
+    "default_title": "JobOS Assistant"
+  }
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobOS Assistant</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="header">
+      <div class="logo-row">
+        <span class="brand-title">JobOS</span>
+        <span class="badge" id="atsBadge">Detecting...</span>
+      </div>
+      <p class="tagline">Apply anywhere. Forget nothing.</p>
+    </header>
+
+    <div id="loadingView" class="view">
+      <div class="spinner"></div>
+      <p>Analyzing job application page...</p>
+    </div>
+
+    <div id="mainView" class="view hidden">
+      <!-- Detected Job Card -->
+      <section class="card job-card">
+        <div class="job-meta">
+          <h2 id="jobTitle" class="job-title">Job Title</h2>
+          <div id="jobCompany" class="job-company">Company</div>
+        </div>
+        <div id="matchSection" class="match-banner">
+          <div class="match-score" id="matchScore">--%</div>
+          <div class="match-summary">
+            <span class="match-label">JobOS Match</span>
+            <span class="match-sub" id="matchSub">Evidence Grounded</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Autofill Safe Fields Section -->
+      <section class="card section-card">
+        <div class="section-header">
+          <h3 class="section-title">1. Safe Field Autofill</h3>
+          <span class="field-count" id="fieldCount">0 fields</span>
+        </div>
+        <p class="section-desc">Fills standard profile info (Name, Email, Phone, URLs). Ambiguous fields left for your review.</p>
+        <button id="autofillBtn" class="btn btn-primary">Autofill Safe Fields</button>
+        <div id="autofillStatus" class="status-msg hidden"></div>
+      </section>
+
+      <!-- Application Questions Assistant -->
+      <section class="card section-card" id="questionsSection">
+        <div class="section-header">
+          <h3 class="section-title">2. Free-Text Questions</h3>
+          <span class="field-count" id="questionCount">0 found</span>
+        </div>
+        <p class="section-desc">Drafts evidence-backed answers. Never fabricates claims. You review and approve before insertion.</p>
+        <div id="questionList" class="question-list"></div>
+      </section>
+
+      <!-- Capture / Remember Application Section -->
+      <section class="card capture-card">
+        <div class="section-header">
+          <h3 class="section-title">3. Application Memory</h3>
+        </div>
+        <p class="section-desc">After you submit the form on the page, click below to freeze and remember this exact application forever.</p>
+        <button id="captureBtn" class="btn btn-accent">Save Application to Capsule</button>
+        <div id="captureSuccess" class="capture-success hidden">
+          <span class="check-icon">✓</span>
+          <div>
+            <strong>Application Saved!</strong>
+            <p>Capsule created with frozen JD, documents & Q&A.</p>
+            <a id="viewCapsuleLink" href="#" target="_blank" class="capsule-link">View in JobOS App →</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <span id="backendStatus" class="backend-indicator">● JobOS Connected</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
