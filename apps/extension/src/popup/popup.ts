@@ -42,6 +42,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const autofillStatus = document.getElementById("autofillStatus")!;
   const skippedFieldsList = document.getElementById("skippedFieldsList")!;
   const questionList = document.getElementById("questionList")!;
+  const submissionSignalBanner = document.getElementById("submissionSignalBanner")!;
+  const confirmSubmittedCheckbox = document.getElementById(
+    "confirmSubmittedCheckbox"
+  ) as HTMLInputElement;
   const captureBtn = document.getElementById("captureBtn") as HTMLButtonElement;
   const captureSuccess = document.getElementById("captureSuccess")!;
   const viewCapsuleLink = document.getElementById("viewCapsuleLink") as HTMLAnchorElement;
@@ -69,6 +73,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       detectedQuestions = response.questions || [];
       atsBadge.innerText =
         response.adapterName || (response.job?.isWorkday ? "Workday" : "Generic");
+
+      if (response.submissionSignal?.detected) {
+        submissionSignalBanner.classList.remove("hidden");
+        submissionSignalBanner.innerText = `✓ ${response.submissionSignal.message}`;
+        confirmSubmittedCheckbox.checked = true;
+      } else {
+        submissionSignalBanner.classList.add("hidden");
+      }
 
       renderJobInfo();
       await matchWithJobOS();
@@ -272,6 +284,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }));
 
     try {
+      const isSubmitted = confirmSubmittedCheckbox.checked;
+      const appStatus = isSubmitted ? "Applied" : "Ready to Apply";
+      const appliedAt = isSubmitted ? new Date().toISOString() : undefined;
+
       const appPayload = assembleApplicationPayload(
         {
           jobId: matchedJob?.id,
@@ -282,6 +298,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           formFields: formFieldsMap,
           rawSnippet: currentJob.descriptionSnippet || "Job application captured from browser.",
           questions: recordedQuestions,
+          status: appStatus,
+          appliedAt,
         },
         currentProfile.user_id
       );

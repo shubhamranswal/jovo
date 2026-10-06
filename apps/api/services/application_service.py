@@ -16,6 +16,7 @@ from apps.api.db.models import (
     FollowUp,
     Interview,
     Job,
+    Resume,
     ResumeVersion,
 )
 from apps.api.schemas.application import (
@@ -53,21 +54,53 @@ class ApplicationService:
                 db.flush()
             company_id = company.id
 
-        application = Application(
-            user_id=payload.user_id,
-            job_id=payload.job_id,
-            company_id=company_id,
-            title=payload.title,
-            source=payload.source,
-            application_url=payload.application_url,
-            status=payload.status,
-            notes=payload.notes,
-            metadata_json=payload.metadata_json,
-        )
-        db.add(application)
-        db.flush()
+        # Deterministic deduplication: check if an application already exists for this user and job
+        existing_app: Application | None = None
+        if payload.job_id:
+            existing_app = db.scalar(
+                select(Application).where(
+                    Application.user_id == payload.user_id,
+                    Application.job_id == payload.job_id,
+                )
+            )
 
-        # Handle initial snapshot if supplied
+        if existing_app:
+            application = existing_app
+            if payload.title:
+                application.title = payload.title
+            if payload.source:
+                application.source = payload.source
+            if payload.application_url:
+                application.application_url = payload.application_url
+            if payload.notes:
+                application.notes = payload.notes
+            if payload.status:
+                application.status = payload.status
+                if payload.status == "Applied" and not application.applied_at:
+                    application.applied_at = datetime.now(UTC)
+            application.captured_at = datetime.now(UTC)
+            if payload.metadata_json:
+                merged_meta = dict(application.metadata_json or {})
+                merged_meta.update(payload.metadata_json)
+                application.metadata_json = merged_meta
+        else:
+            application = Application(
+                user_id=payload.user_id,
+                job_id=payload.job_id,
+                company_id=company_id,
+                title=payload.title,
+                source=payload.source,
+                application_url=payload.application_url,
+                status=payload.status,
+                applied_at=datetime.now(UTC) if payload.status == "Applied" else None,
+                captured_at=datetime.now(UTC),
+                notes=payload.notes,
+                metadata_json=payload.metadata_json,
+            )
+            db.add(application)
+            db.flush()
+
+        # Handle exact job description snapshot
         if payload.initial_snapshot:
             snap = ApplicationSnapshot(
                 application_id=application.id,
@@ -77,37 +110,113 @@ class ApplicationService:
                 extraction_metadata_json=payload.initial_snapshot.extraction_metadata_json,
             )
             db.add(snap)
-
-        # Handle initial documents
-        for doc_in in payload.initial_documents:
-            doc = ApplicationDocument(
-                application_id=application.id,
-                document_type=doc_in.document_type,
-                document_id=doc_in.document_id,
-                version_label=doc_in.version_label,
-            )
-            db.add(doc)
-
-        # Handle initial questions and answers
-        for q_in in payload.initial_questions:
-            q = ApplicationQuestion(
-                application_id=application.id,
-                question_text=q_in.question_text,
-                normalized_question=q_in.normalized_question,
-                question_type=q_in.question_type,
-                page_field_name=q_in.page_field_name,
-                order_index=q_in.order_index,
-            )
-            db.add(q)
-            db.flush()
-            if q_in.answer:
-                ans = ApplicationAnswer(
-                    question_id=q.id,
-                    answer_text=q_in.answer.answer_text,
-                    source=q_in.answer.source,
-                    user_approved=q_in.answer.user_approved,
+            application.captured_at = datetime.now(UTC)
+        elif payload.job_id and not application.snapshots:
+            # Automatically freeze a snapshot of the JD at application time
+            job = db.scalar(select(Job).where(Job.id == payload.job_id))
+            if job:
+                snap = ApplicationSnapshot(
+                    application_id=application.id,
+                    job_description=job.description,
+                    page_title=job.title,
+                    page_url=job.canonical_url or payload.application_url,
+                    extraction_metadata_json={
+                        "role_title": job.title,
+                        "company": payload.company_name
+                        or (job.company.canonical_name if job.company else None),
+                        "location": job.location,
+                        "salary_min": str(job.salary_min) if job.salary_min is not None else None,
+                        "salary_max": str(job.salary_max) if job.salary_max is not None else None,
+                        "currency": job.currency,
+                        "skills": (job.metadata_json or {}).get("skills", [])
+                        if isinstance(job.metadata_json, dict)
+                        else [],
+                        "source": (job.source_names_json[0] if job.source_names_json else None)
+                        or payload.source,
+                        "original_job_url": job.canonical_url,
+                        "captured_at": datetime.now(UTC).isoformat(),
+                    },
                 )
-                db.add(ans)
+                db.add(snap)
+                application.captured_at = datetime.now(UTC)
+
+        # Handle initial documents (resolves exact versions and avoids duplicates)
+        for doc_in in payload.initial_documents:
+            doc_id = doc_in.document_id
+            doc_label = doc_in.version_label
+
+            # Auto-resolve tailored resume or cover letter if document_id was omitted
+            if not doc_id and payload.job_id:
+                if doc_in.document_type == "resume":
+                    tailored_rv = db.scalar(
+                        select(ResumeVersion)
+                        .where(ResumeVersion.job_id == payload.job_id)
+                        .order_by(ResumeVersion.created_at.desc())
+                    )
+                    if tailored_rv:
+                        doc_id = tailored_rv.id
+                        doc_label = tailored_rv.version_label
+                elif doc_in.document_type == "cover_letter":
+                    cl = db.scalar(
+                        select(CoverLetter)
+                        .where(CoverLetter.job_id == payload.job_id)
+                        .order_by(CoverLetter.created_at.desc())
+                    )
+                    if cl:
+                        doc_id = cl.id
+                        doc_label = f"Cover Letter v{cl.version}"
+
+            # Only add if not already attached to this application
+            already_attached = any(
+                d.document_type == doc_in.document_type and d.document_id == doc_id
+                for d in application.documents
+            )
+            if not already_attached:
+                doc = ApplicationDocument(
+                    application_id=application.id,
+                    document_type=doc_in.document_type,
+                    document_id=doc_id,
+                    version_label=doc_label,
+                )
+                db.add(doc)
+
+        # Handle initial questions and candidate-approved answers
+        for q_in in payload.initial_questions:
+            existing_q = next(
+                (
+                    q
+                    for q in application.questions
+                    if q.question_text.strip() == q_in.question_text.strip()
+                ),
+                None,
+            )
+            if existing_q:
+                q = existing_q
+            else:
+                q = ApplicationQuestion(
+                    application_id=application.id,
+                    question_text=q_in.question_text.strip(),
+                    normalized_question=q_in.normalized_question,
+                    question_type=q_in.question_type,
+                    page_field_name=q_in.page_field_name,
+                    order_index=q_in.order_index,
+                )
+                db.add(q)
+                db.flush()
+
+            if q_in.answer:
+                if q.answers:
+                    q.answers[0].answer_text = q_in.answer.answer_text
+                    q.answers[0].source = q_in.answer.source
+                    q.answers[0].user_approved = q_in.answer.user_approved
+                else:
+                    ans = ApplicationAnswer(
+                        question_id=q.id,
+                        answer_text=q_in.answer.answer_text,
+                        source=q_in.answer.source,
+                        user_approved=q_in.answer.user_approved,
+                    )
+                    db.add(ans)
 
         db.commit()
         db.refresh(application)
@@ -236,6 +345,10 @@ class ApplicationService:
                 rv = db.scalar(select(ResumeVersion).where(ResumeVersion.id == d.document_id))
                 if rv:
                     content = rv.content
+                else:
+                    base_res = db.scalar(select(Resume).where(Resume.id == d.document_id))
+                    if base_res:
+                        content = base_res.extracted_text
             elif d.document_type == "cover_letter" and d.document_id:
                 cl = db.scalar(select(CoverLetter).where(CoverLetter.id == d.document_id))
                 if cl:

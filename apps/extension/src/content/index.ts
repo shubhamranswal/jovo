@@ -5,9 +5,13 @@
 
 import { resolveAdapter } from "./adapters";
 import { autofillSafeFields } from "./autofill";
+import { detectSubmissionSignals, initSubmissionObserver } from "./submission";
 import type { ExtensionMessage } from "../types";
 
 function initContentScript(): void {
+  // Passively observe manual form submission events
+  initSubmissionObserver(document);
+
   // Listen for messages from popup or background
   chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
     switch (message.type) {
@@ -16,12 +20,14 @@ function initContentScript(): void {
         const job = adapter.extractJob(window.location.href, document);
         const fields = adapter.detectFormFields(document);
         const questions = adapter.detectQuestions(document);
+        const submissionSignal = detectSubmissionSignals(window.location.href, document);
 
         sendResponse({
           job,
           fields,
           questions,
           adapterName: adapter.name,
+          submissionSignal,
         });
         return true;
       }

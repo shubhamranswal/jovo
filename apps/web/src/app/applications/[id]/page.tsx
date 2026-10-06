@@ -6,6 +6,15 @@ import React, { useEffect, useState } from "react";
 import type { ApplicationCapsule, ApplicationStatus } from "@jobos/contracts";
 import { api } from "../../../lib/api";
 
+interface TimelineEvent {
+  id: string;
+  date: Date;
+  title: string;
+  badge: string;
+  badgeType: "blue" | "green" | "amber" | "gray";
+  description: string;
+}
+
 export default function ApplicationDetailPage() {
   const params = useParams();
   const applicationId = params?.id as string;
@@ -14,8 +23,8 @@ export default function ApplicationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "snapshot" | "documents" | "qa" | "prep" | "followups"
-  >("snapshot");
+    "timeline" | "snapshot" | "documents" | "qa" | "prep" | "followups"
+  >("timeline");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [generatingPrep, setGeneratingPrep] = useState(false);
 
@@ -99,6 +108,101 @@ export default function ApplicationDetailPage() {
   const { application, snapshot, documents, answers, interviews, follow_ups } = capsule;
   const resumeDoc = documents.find((d) => d.document_type === "resume");
   const coverLetterDoc = documents.find((d) => d.document_type === "cover_letter");
+
+  // Build chronological timeline events
+  const timelineEvents: TimelineEvent[] = [];
+
+  if (application.created_at) {
+    timelineEvents.push({
+      id: "created",
+      date: new Date(application.created_at),
+      title: "Application Tracked in JobOS",
+      badge: "Initialized",
+      badgeType: "blue",
+      description: `Application context established targeting ${application.target_role} at ${application.target_company}.`,
+    });
+  }
+
+  if (snapshot?.captured_at) {
+    timelineEvents.push({
+      id: "snapshot",
+      date: new Date(snapshot.captured_at),
+      title: "Job Description Snapshot Frozen",
+      badge: "Memory Captured",
+      badgeType: "blue",
+      description: `Captured from ${snapshot.captured_url || "application portal"}. Preserves original job requirements against later postings takedown or mutations.`,
+    });
+  }
+
+  if (resumeDoc?.created_at) {
+    timelineEvents.push({
+      id: "resume",
+      date: new Date(resumeDoc.created_at),
+      title: `Tailored Resume Attached (${resumeDoc.version_label})`,
+      badge: "Resume Frozen",
+      badgeType: "blue",
+      description:
+        "Exact tailored resume submitted to employer preserved permanently in the Application Capsule.",
+    });
+  }
+
+  if (coverLetterDoc?.created_at) {
+    timelineEvents.push({
+      id: "cover_letter",
+      date: new Date(coverLetterDoc.created_at),
+      title: `Tailored Cover Letter Attached (${coverLetterDoc.version_label})`,
+      badge: "Letter Frozen",
+      badgeType: "amber",
+      description: `Company-specific cover letter tailored for ${application.target_company} locked into capsule.`,
+    });
+  }
+
+  if (application.applied_at) {
+    timelineEvents.push({
+      id: "applied",
+      date: new Date(application.applied_at),
+      title: `Application Form Submitted (${application.status})`,
+      badge: "Submitted",
+      badgeType: "green",
+      description: `Recorded submission on ${application.target_company} career portal. Status updated to ${application.status}.`,
+    });
+  }
+
+  answers.forEach((ans, idx) => {
+    timelineEvents.push({
+      id: `ans-${idx}`,
+      date: new Date(application.applied_at || application.created_at),
+      title: `Form Answer Preserved: "${ans.question_text || `Field #${idx + 1}`}"`,
+      badge: ans.user_approved ? "Candidate Approved" : "Draft Answer",
+      badgeType: ans.user_approved ? "green" : "amber",
+      description: `Submitted value: "${ans.answer_text}" (Source: ${ans.source || "Form Autofill"}).`,
+    });
+  });
+
+  interviews.forEach((item, idx) => {
+    timelineEvents.push({
+      id: `prep-${idx}`,
+      date: new Date(item.created_at || application.created_at),
+      title: `${item.stage} Stage Interview Prep Generated`,
+      badge: "Interview Prep",
+      badgeType: "blue",
+      description:
+        item.notes || `Grounded preparation materials synthesized from frozen capsule state.`,
+    });
+  });
+
+  follow_ups.forEach((f, idx) => {
+    timelineEvents.push({
+      id: `followup-${idx}`,
+      date: new Date(f.due_at),
+      title: `Follow-up Touchpoint: ${f.type}`,
+      badge: f.completed_at ? "Completed" : "Scheduled",
+      badgeType: f.completed_at ? "green" : "amber",
+      description: f.notes || `Scheduled follow-up reminder for candidate.`,
+    });
+  });
+
+  timelineEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
     <div className="container" style={{ paddingTop: "32px" }}>
@@ -198,41 +302,128 @@ export default function ApplicationDetailPage() {
           marginBottom: "24px",
           borderBottom: "1px solid var(--border-color)",
           paddingBottom: "12px",
+          overflowX: "auto",
         }}
       >
+        <button
+          onClick={() => setActiveTab("timeline")}
+          className={`btn ${activeTab === "timeline" ? "btn-primary" : "btn-secondary"} btn-sm`}
+        >
+          1. Timeline ({timelineEvents.length})
+        </button>
         <button
           onClick={() => setActiveTab("snapshot")}
           className={`btn ${activeTab === "snapshot" ? "btn-primary" : "btn-secondary"} btn-sm`}
         >
-          1. Exact Job Snapshot
+          2. Exact Job Snapshot
         </button>
         <button
           onClick={() => setActiveTab("documents")}
           className={`btn ${activeTab === "documents" ? "btn-primary" : "btn-secondary"} btn-sm`}
         >
-          2. Submitted Documents ({documents.length})
+          3. Submitted Documents ({documents.length})
         </button>
         <button
           onClick={() => setActiveTab("qa")}
           className={`btn ${activeTab === "qa" ? "btn-primary" : "btn-secondary"} btn-sm`}
         >
-          3. Captured Answers ({answers.length})
+          4. Captured Answers ({answers.length})
         </button>
         <button
           onClick={() => setActiveTab("prep")}
           className={`btn ${activeTab === "prep" ? "btn-primary" : "btn-secondary"} btn-sm`}
         >
-          4. Interview Prep ({interviews.length})
+          5. Interview Prep ({interviews.length})
         </button>
         <button
           onClick={() => setActiveTab("followups")}
           className={`btn ${activeTab === "followups" ? "btn-primary" : "btn-secondary"} btn-sm`}
         >
-          5. Follow-ups ({follow_ups.length})
+          6. Follow-ups ({follow_ups.length})
         </button>
       </div>
 
-      {/* Tab 1: Exact Job Description Snapshot */}
+      {/* Tab 1: Timeline View */}
+      {activeTab === "timeline" && (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h3 className="title-md">Application Journey & Memory Timeline</h3>
+              <p className="text-xs text-muted">
+                Chronological audit trail of all actions, submissions, and preserved artifacts
+              </p>
+            </div>
+            <span className="badge badge-blue">Audit Trail</span>
+          </div>
+
+          {timelineEvents.length === 0 ? (
+            <div className="text-sm text-muted" style={{ textAlign: "center", padding: "40px 0" }}>
+              No timeline milestones recorded yet.
+            </div>
+          ) : (
+            <div
+              style={{
+                position: "relative",
+                paddingLeft: "28px",
+                borderLeft: "2px solid var(--border-color)",
+                marginLeft: "12px",
+                marginTop: "16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "28px",
+              }}
+            >
+              {timelineEvents.map((evt) => (
+                <div key={evt.id} style={{ position: "relative" }}>
+                  {/* Timeline indicator node */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "-35px",
+                      top: "2px",
+                      width: "12px",
+                      height: "12px",
+                      borderRadius: "50%",
+                      background:
+                        evt.badgeType === "green"
+                          ? "#34d399"
+                          : evt.badgeType === "amber"
+                            ? "#fbbf24"
+                            : "#60a5fa",
+                      border: "2px solid var(--bg-card)",
+                      boxShadow: "0 0 0 2px var(--border-color)",
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    <span className={`badge badge-${evt.badgeType}`}>{evt.badge}</span>
+                    <span className="text-xs text-muted">{evt.date.toLocaleString()}</span>
+                  </div>
+
+                  <h4
+                    className="title-sm"
+                    style={{ fontSize: "0.95rem", fontWeight: "600", marginBottom: "4px" }}
+                  >
+                    {evt.title}
+                  </h4>
+                  <p className="text-sm text-dim" style={{ lineHeight: "1.5" }}>
+                    {evt.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 2: Exact Job Description Snapshot */}
       {activeTab === "snapshot" && (
         <div className="card">
           <div className="card-header">
@@ -280,7 +471,7 @@ export default function ApplicationDetailPage() {
         </div>
       )}
 
-      {/* Tab 2: Submitted Documents (Resume Version & Cover Letter) */}
+      {/* Tab 3: Submitted Documents (Exact Resume & Cover Letter Content) */}
       {activeTab === "documents" && (
         <div className="grid-2">
           <div className="card">
@@ -298,10 +489,14 @@ export default function ApplicationDetailPage() {
               Linked Document ID: {resumeDoc?.document_id || "None"}
             </div>
 
-            <div className="pre-box" style={{ maxHeight: "380px" }}>
-              {resumeDoc
-                ? `Resume Version: ${resumeDoc.version_label}\n\nPreserved immutable in JobOS Application Capsule.\nThis is the exact tailored resume submitted to ${application.target_company}.`
-                : "No resume document registered."}
+            <div
+              className="pre-box"
+              style={{ maxHeight: "420px", overflowY: "auto", whiteSpace: "pre-wrap" }}
+            >
+              {resumeDoc?.content ||
+                (resumeDoc
+                  ? `Resume Version: ${resumeDoc.version_label}\n\nPreserved immutable in JobOS Application Capsule.\nThis is the exact tailored resume submitted to ${application.target_company}.`
+                  : "No resume document registered.")}
             </div>
           </div>
 
@@ -320,16 +515,20 @@ export default function ApplicationDetailPage() {
               Linked Document ID: {coverLetterDoc?.document_id || "None"}
             </div>
 
-            <div className="pre-box" style={{ maxHeight: "380px" }}>
-              {coverLetterDoc
-                ? `Cover Letter: ${coverLetterDoc.version_label}\n\nCompany: ${application.target_company}\nPreserved immutable in JobOS Application Capsule.`
-                : "No cover letter document registered."}
+            <div
+              className="pre-box"
+              style={{ maxHeight: "420px", overflowY: "auto", whiteSpace: "pre-wrap" }}
+            >
+              {coverLetterDoc?.content ||
+                (coverLetterDoc
+                  ? `Cover Letter: ${coverLetterDoc.version_label}\n\nCompany: ${application.target_company}\nPreserved immutable in JobOS Application Capsule.`
+                  : "No cover letter document registered.")}
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab 3: Captured Questions & Answers */}
+      {/* Tab 4: Captured Questions & Answers */}
       {activeTab === "qa" && (
         <div className="card">
           <div className="card-header">
@@ -339,6 +538,7 @@ export default function ApplicationDetailPage() {
                 Recorded from the Workday or generic web application form
               </p>
             </div>
+            <span className="badge badge-blue">{answers.length} Answers Recorded</span>
           </div>
 
           {answers.length === 0 ? (
@@ -357,14 +557,38 @@ export default function ApplicationDetailPage() {
                     borderRadius: "var(--radius-sm)",
                   }}
                 >
-                  <div className="label" style={{ marginBottom: "6px" }}>
-                    Question {i + 1}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <div className="label" style={{ marginBottom: 0, fontWeight: "600" }}>
+                      {ans.question_text || `Question ${i + 1}`}
+                    </div>
+                    <span className={`badge ${ans.user_approved ? "badge-green" : "badge-amber"}`}>
+                      {ans.user_approved ? "✓ Approved by Candidate" : "⚠ Draft Answer"}
+                    </span>
                   </div>
-                  <div className="text-sm" style={{ fontWeight: "600", marginBottom: "8px" }}>
-                    Answer Text: {ans.answer_text}
+
+                  <div
+                    className="text-sm"
+                    style={{
+                      fontWeight: "500",
+                      marginBottom: "8px",
+                      background: "rgba(255,255,255,0.03)",
+                      padding: "10px 12px",
+                      borderRadius: "4px",
+                      border: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    {ans.answer_text}
                   </div>
+
                   <div className="text-xs text-dim">
-                    Source: {ans.source} • Approved by Candidate: {ans.user_approved ? "Yes" : "No"}
+                    Source: {ans.source || "Extension Autofill"} • Preserved in Capsule
                   </div>
                 </div>
               ))}
@@ -373,7 +597,7 @@ export default function ApplicationDetailPage() {
         </div>
       )}
 
-      {/* Tab 4: Interview Preparation Grounded in Capsule */}
+      {/* Tab 5: Interview Preparation Grounded in Capsule */}
       {activeTab === "prep" && (
         <div className="card">
           <div className="card-header">
@@ -447,7 +671,7 @@ export default function ApplicationDetailPage() {
         </div>
       )}
 
-      {/* Tab 5: Follow-up Reminders */}
+      {/* Tab 6: Follow-up Reminders */}
       {activeTab === "followups" && (
         <div className="card">
           <div className="card-header">

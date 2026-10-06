@@ -65,14 +65,24 @@
         <div class="section-header">
           <h3 class="section-title">3. Application Memory</h3>
         </div>
-        <p class="section-desc">After you submit the form on the page, click below to freeze and remember this exact application forever.</p>
+        <p class="section-desc">Freeze and preserve this exact application (JD, safe fields, tailored materials & approved Q&A) in your permanent Application Capsule.</p>
+        
+        <div id="submissionSignalBanner" class="submission-banner hidden"></div>
+        
+        <div class="status-choice-row">
+          <label class="status-choice-label">
+            <input type="checkbox" id="confirmSubmittedCheckbox" checked />
+            <span>Mark as Manually Submitted (Applied)</span>
+          </label>
+        </div>
+
         <button id="captureBtn" class="btn btn-accent">Save Application to Capsule</button>
         <div id="captureSuccess" class="capture-success hidden">
           <span class="check-icon">✓</span>
           <div>
-            <strong>Application Saved!</strong>
-            <p>Capsule created with frozen JD, documents & Q&A.</p>
-            <a id="viewCapsuleLink" href="#" target="_blank" class="capsule-link">View in JobOS App →</a>
+            <strong>Application Saved to Memory!</strong>
+            <p>Capsule created with frozen JD snapshot, documents & Q&A.</p>
+            <a id="viewCapsuleLink" href="#" target="_blank" class="capsule-link">View Application Capsule →</a>
           </div>
         </div>
       </section>

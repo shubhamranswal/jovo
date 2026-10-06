@@ -53,6 +53,10 @@ export function assembleApplicationPayload(
     });
   }
 
+  const appStatus = payload.status || "Applied";
+  const appliedTimestamp =
+    payload.appliedAt || (appStatus === "Applied" ? new Date().toISOString() : undefined);
+
   return {
     user_id: userId,
     job_id: payload.jobId || null,
@@ -60,13 +64,22 @@ export function assembleApplicationPayload(
     title: payload.title,
     source: payload.jobId ? "serpapi" : "browser_capture",
     application_url: payload.url,
-    status: "Applied",
+    status: appStatus,
     notes: `Captured via JobOS Chrome Extension on ${new Date().toISOString()}`,
+    metadata_json: {
+      captured_via: "JobOS Chrome Extension",
+      captured_at: new Date().toISOString(),
+      ...(appliedTimestamp ? { applied_at: appliedTimestamp } : {}),
+    },
     initial_snapshot: {
       job_description: payload.rawSnippet,
       page_title: payload.pageTitle,
       page_url: payload.url,
       extraction_metadata_json: {
+        role_title: payload.title,
+        company: payload.company,
+        original_job_url: payload.url,
+        captured_at: new Date().toISOString(),
         captured_fields: sanitizedFormFields,
         detected_questions_count: initialQuestions.length,
       },

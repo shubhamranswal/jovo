@@ -283,6 +283,7 @@ export interface ApplicationDocument {
   document_type: string;
   document_id?: string | null;
   version_label: string;
+  content?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -299,6 +300,7 @@ export interface ApplicationQuestion {
 export interface ApplicationAnswer {
   id: string;
   question_id: string;
+  question_text?: string | null;
   answer_text: string;
   source: string;
   user_approved: boolean;

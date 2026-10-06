@@ -50,6 +50,13 @@ export interface AutofillResult {
   unfilledFields: string[];
 }
 
+export interface SubmissionSignal {
+  detected: boolean;
+  confidence: number;
+  signalType: "confirmation_url" | "confirmation_dom_text" | "manual_form_submit_event" | "none";
+  message: string;
+}
+
 export interface ApplicationCapturePayload {
   jobId?: string;
   company: string;
@@ -66,6 +73,8 @@ export interface ApplicationCapturePayload {
   }>;
   resumeVersionId?: string;
   coverLetterId?: string;
+  status?: string;
+  appliedAt?: string;
 }
 
 export interface ExtensionState {
