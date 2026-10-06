@@ -3,6 +3,7 @@
  */
 
 import { jobosApi } from "../api";
+import { assembleApplicationPayload } from "../content/capture";
 import type { CareerProfile, Job, JobMatch } from "@jobos/contracts";
 import type {
   AutofillResult,
@@ -210,52 +211,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     captureBtn.disabled = true;
     captureBtn.innerText = "Freezing Application Context...";
 
-    // Gather form field pairs and question answers
+    // Assemble sanitized capture payload with whitelisted fields and approved questions
     const formFieldsMap: Record<string, string> = {};
     for (const f of detectedFields) {
-      if (f.currentValue) {
+      if (f.currentValue && f.fieldType !== "unknown") {
         formFieldsMap[f.label || f.name] = f.currentValue;
       }
     }
 
-    const recordedQuestions = detectedQuestions.map((q) => ({
-      questionText: q.questionText,
-      answerText: draftAnswers[q.selector] || q.currentValue || "",
-      source: draftAnswers[q.selector] ? "jobos_assistant" : "candidate_manual",
-      userApproved: true,
-    }));
+    // Only capture questions that have genuine content and user approval
+    const recordedQuestions = detectedQuestions
+      .filter((q) => Boolean(draftAnswers[q.selector] || q.currentValue))
+      .map((q) => ({
+        questionText: q.questionText,
+        answerText: draftAnswers[q.selector] || q.currentValue || "",
+        source: draftAnswers[q.selector] ? "jobos_assistant" : "candidate_manual",
+        userApproved: true,
+      }));
 
     try {
-      const capsule = await jobosApi.createApplication({
-        user_id: currentProfile.user_id,
-        job_id: matchedJob?.id || null,
-        company_name: currentJob.company,
-        title: currentJob.title,
-        source: matchedJob ? "serpapi" : "browser_capture",
-        application_url: currentJob.url,
-        status: "Applied",
-        notes: `Captured via JobOS Chrome Extension on ${new Date().toLocaleDateString()}`,
-        initial_snapshot: {
-          job_description:
-            currentJob.descriptionSnippet || "Job application captured from browser.",
-          page_title: currentJob.title,
-          page_url: currentJob.url,
-          extraction_metadata_json: {
-            is_workday: currentJob.isWorkday,
-            external_id: currentJob.externalId,
-          },
+      const appPayload = assembleApplicationPayload(
+        {
+          jobId: matchedJob?.id,
+          company: currentJob.company,
+          title: currentJob.title,
+          url: currentJob.url,
+          pageTitle: currentJob.title,
+          formFields: formFieldsMap,
+          rawSnippet: currentJob.descriptionSnippet || "Job application captured from browser.",
+          questions: recordedQuestions,
         },
-        initial_questions: recordedQuestions.map((rq, idx) => ({
-          question_text: rq.questionText,
-          question_type: "free_text",
-          order_index: idx + 1,
-          answer: {
-            answer_text: rq.answerText,
-            source: rq.source,
-            user_approved: rq.userApproved,
-          },
-        })),
-      });
+        currentProfile.user_id
+      );
+
+      const capsule = await jobosApi.createApplication(appPayload);
 
       captureBtn.classList.add("hidden");
       captureSuccess.classList.remove("hidden");

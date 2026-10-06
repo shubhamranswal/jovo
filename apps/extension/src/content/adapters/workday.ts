@@ -14,6 +14,7 @@ import type {
   ExtractedJobMetadata,
   SafeFieldType,
 } from "../../types";
+import { isElementSensitive, isGenuineApplicationQuestion } from "../security";
 import type { AtsAdapter } from "./types";
 
 export class WorkdayAdapter implements AtsAdapter {
@@ -54,32 +55,33 @@ export class WorkdayAdapter implements AtsAdapter {
     }
 
     // 2. Company Name
-    // Workday URLs usually formatted: https://{company}.wd1.myworkdayjobs.com/...
+    // Check explicit Workday DOM element or meta tags first for high fidelity
     let company = "";
-    try {
-      const parsedUrl = new URL(url);
-      const hostParts = parsedUrl.hostname.split(".");
-      const firstPart = hostParts[0];
-      const secondPart = hostParts[1];
-      if (hostParts.length > 2 && secondPart && secondPart.startsWith("wd") && firstPart) {
-        company = firstPart.replace(/[-_]/g, " ");
-        company = company.charAt(0).toUpperCase() + company.slice(1);
-      }
-    } catch {
-      // Fallback
+    const companyEl =
+      document.querySelector('[data-automation-id="companyName"]') ||
+      document.querySelector('meta[property="og:site_name"]');
+    if (companyEl) {
+      const rawComp =
+        (companyEl as HTMLElement).textContent ||
+        (companyEl as HTMLElement).innerText ||
+        (companyEl as HTMLMetaElement).content ||
+        "";
+      company = rawComp.trim();
     }
 
+    // Fallback: parse from Workday URL subdomain: https://{company}.wd1.myworkdayjobs.com/...
     if (!company) {
-      const companyEl =
-        document.querySelector('[data-automation-id="companyName"]') ||
-        document.querySelector('meta[property="og:site_name"]');
-      if (companyEl) {
-        const rawComp =
-          (companyEl as HTMLElement).textContent ||
-          (companyEl as HTMLElement).innerText ||
-          (companyEl as HTMLMetaElement).content ||
-          "";
-        company = rawComp.trim();
+      try {
+        const parsedUrl = new URL(url);
+        const hostParts = parsedUrl.hostname.split(".");
+        const firstPart = hostParts[0];
+        const secondPart = hostParts[1];
+        if (hostParts.length > 2 && secondPart && secondPart.startsWith("wd") && firstPart) {
+          company = firstPart.replace(/[-_]/g, " ");
+          company = company.charAt(0).toUpperCase() + company.slice(1);
+        }
+      } catch {
+        // Fallback
       }
     }
 
@@ -187,6 +189,10 @@ export class WorkdayAdapter implements AtsAdapter {
       'input:not([type="hidden"]):not([type="submit"]):not([type="password"])'
     );
     for (const input of allInputs) {
+      if (isElementSensitive(input)) {
+        continue;
+      }
+
       const automationId = input.getAttribute("data-automation-id") || "";
       const name = input.getAttribute("name") || "";
       const label = this.getLabelForElement(input);
@@ -226,8 +232,16 @@ export class WorkdayAdapter implements AtsAdapter {
     const textareas = document.querySelectorAll<HTMLTextAreaElement>("textarea");
     let idx = 0;
     for (const ta of textareas) {
+      if (isElementSensitive(ta)) {
+        continue;
+      }
+
+      const label = this.getLabelForElement(ta) || `Application Question #${idx + 1}`;
+      if (!isGenuineApplicationQuestion(label)) {
+        continue;
+      }
+
       idx++;
-      const label = this.getLabelForElement(ta) || `Application Question #${idx}`;
       const automationId = ta.getAttribute("data-automation-id");
       const selector = automationId
         ? `textarea[data-automation-id="${automationId}"]`

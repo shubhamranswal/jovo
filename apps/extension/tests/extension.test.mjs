@@ -50,7 +50,7 @@ console.log("Running Chrome Extension Unit Tests...");
 
   const jobMeta = adapter.extractJob(dom.window.location.href, doc);
   assert.strictEqual(jobMeta.title, "Senior Platform Engineer", "Job title should match");
-  assert.strictEqual(jobMeta.company, "Acme", "Company extracted from URL/DOM");
+  assert.strictEqual(jobMeta.company, "Acme Cloud", "Company extracted from URL/DOM");
   assert.strictEqual(jobMeta.location, "San Francisco, CA", "Location should match");
   assert.strictEqual(jobMeta.externalId, "REQ-84920", "Req ID should match");
   assert.strictEqual(jobMeta.isWorkday, true, "IsWorkday flag must be true");
@@ -161,4 +161,70 @@ console.log("Running Chrome Extension Unit Tests...");
   console.log("✓ Application Capture payload assembly verified.");
 }
 
-console.log("\nALL 3 CHROME EXTENSION UNIT TESTS PASSED!");
+// 4. Test Security Sanitization of Sensitive Fields & Non-Genuine Questions
+{
+  const unsafeCapturePayload = {
+    jobId: "job-100",
+    company: "Acme",
+    title: "Engineer",
+    url: "https://acme.com/apply",
+    pageTitle: "Apply",
+    formFields: {
+      "First Name": "Alex",
+      "Email": "alex@example.com",
+      "Password": "super-secret-password-123",
+      "SSN": "000-12-3456",
+      "credit_card": "4111-1111-1111-1111",
+      "csrf_token": "abcde987654",
+    },
+    rawSnippet: "JD",
+    questions: [
+      {
+        questionText: "Why do you want to join our engineering team?",
+        answerText: "I am passionate about systems design.",
+        source: "jobos_assistant",
+        userApproved: true,
+      },
+      {
+        questionText: "Enter your password to verify your account",
+        answerText: "secretpwd",
+        source: "candidate_manual",
+        userApproved: true,
+      },
+      {
+        questionText: "Search our jobs",
+        answerText: "python",
+        source: "candidate_manual",
+        userApproved: true,
+      },
+      {
+        questionText: "What is your greatest technical achievement?",
+        answerText: "Unapproved draft...",
+        source: "jobos_assistant",
+        userApproved: false, // NOT approved
+      },
+    ],
+  };
+
+  const appCreate = assembleApplicationPayload(unsafeCapturePayload, "user-1");
+  const capturedFields = appCreate.initial_snapshot.extraction_metadata_json.captured_fields;
+
+  // Verify sensitive fields are strictly excluded
+  assert.strictEqual(capturedFields["Password"], undefined, "Password must never be captured");
+  assert.strictEqual(capturedFields["SSN"], undefined, "SSN must never be captured");
+  assert.strictEqual(capturedFields["credit_card"], undefined, "Card info must never be captured");
+  assert.strictEqual(capturedFields["csrf_token"], undefined, "Tokens must never be captured");
+  assert.strictEqual(capturedFields["First Name"], "Alex", "Safe field preserved");
+  assert.strictEqual(capturedFields["Email"], "alex@example.com", "Safe field preserved");
+
+  // Verify only genuine, user-approved questions are captured
+  assert.strictEqual(appCreate.initial_questions.length, 1, "Only genuine approved questions captured");
+  assert.strictEqual(
+    appCreate.initial_questions[0].question_text,
+    "Why do you want to join our engineering team?"
+  );
+
+  console.log("✓ Security sanitization & question filter verified.");
+}
+
+console.log("\nALL 4 CHROME EXTENSION UNIT TESTS PASSED!");

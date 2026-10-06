@@ -11,18 +11,18 @@
     "http://*/*"
   ],
   "background": {
-    "service_worker": "dist/background.js",
+    "service_worker": "background.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://*/*", "http://*/*"],
-      "js": ["dist/content.js"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "dist/popup.html",
+    "default_popup": "popup.html",
     "default_title": "JobOS Assistant"
   }
 }

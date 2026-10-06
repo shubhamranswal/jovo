@@ -9,6 +9,7 @@ import type {
   ExtractedJobMetadata,
   SafeFieldType,
 } from "../../types";
+import { isElementSensitive, isGenuineApplicationQuestion } from "../security";
 import type { AtsAdapter } from "./types";
 
 export class GenericAdapter implements AtsAdapter {
@@ -88,6 +89,10 @@ export class GenericAdapter implements AtsAdapter {
     );
 
     for (const el of inputs) {
+      if (isElementSensitive(el)) {
+        continue;
+      }
+
       const name = el.getAttribute("name") || "";
       const id = el.id || "";
       const label = this.getLabelForElement(el);
@@ -119,8 +124,16 @@ export class GenericAdapter implements AtsAdapter {
 
     let idx = 0;
     for (const ta of textareas) {
+      if (isElementSensitive(ta)) {
+        continue;
+      }
+
+      const label = this.getLabelForElement(ta) || `Application Question #${idx + 1}`;
+      if (!isGenuineApplicationQuestion(label)) {
+        continue;
+      }
+
       idx++;
-      const label = this.getLabelForElement(ta) || `Application Question #${idx}`;
       const selector = ta.id
         ? `#${ta.id}`
         : ta.name

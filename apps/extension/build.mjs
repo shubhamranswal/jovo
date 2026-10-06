@@ -12,7 +12,11 @@ async function build() {
     fs.mkdirSync(outdir, { recursive: true });
   }
 
-  // Copy HTML & CSS
+  // Copy HTML & CSS & Manifest
+  fs.copyFileSync(
+    path.resolve(__dirname, "manifest.json"),
+    path.resolve(outdir, "manifest.json")
+  );
   fs.copyFileSync(
     path.resolve(__dirname, "src/popup/popup.html"),
     path.resolve(outdir, "popup.html")

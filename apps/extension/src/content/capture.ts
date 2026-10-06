@@ -11,19 +11,27 @@
 
 import type { ApplicationCreate } from "@jobos/contracts";
 import type { ApplicationCapturePayload } from "../types";
+import { isGenuineApplicationQuestion, sanitizeCapturedFormFields } from "./security";
 
 export function assembleApplicationPayload(
   payload: ApplicationCapturePayload,
   userId: string
 ): ApplicationCreate {
-  const formFieldPairs: Record<string, unknown> = { ...payload.formFields };
+  // Extract set of allowed labels/keys from the detected payload
+  const allowedKeys = new Set(Object.keys(payload.formFields));
+  const sanitizedFormFields = sanitizeCapturedFormFields(payload.formFields, allowedKeys);
 
-  const initialQuestions = payload.questions.map((q, idx) => ({
-    question_text: q.questionText,
+  // Filter and sanitize questions to ensure only genuine, user-reviewed application Q&As are captured
+  const genuineQuestions = payload.questions.filter(
+    (q) => isGenuineApplicationQuestion(q.questionText) && q.userApproved
+  );
+
+  const initialQuestions = genuineQuestions.map((q, idx) => ({
+    question_text: q.questionText.trim(),
     question_type: "free_text",
     order_index: idx + 1,
     answer: {
-      answer_text: q.answerText,
+      answer_text: q.answerText.trim(),
       source: q.source || "jobos_assistant",
       user_approved: q.userApproved,
     },
@@ -59,8 +67,8 @@ export function assembleApplicationPayload(
       page_title: payload.pageTitle,
       page_url: payload.url,
       extraction_metadata_json: {
-        captured_fields: formFieldPairs,
-        detected_questions_count: payload.questions.length,
+        captured_fields: sanitizedFormFields,
+        detected_questions_count: initialQuestions.length,
       },
     },
     initial_documents: initialDocs,
