@@ -1,13 +1,15 @@
 /**
  * Safe Field Autofill Engine
  *
- * Fills only safe profile fields (Name, Email, Phone, LinkedIn, GitHub, etc.)
+ * Fills only safe profile fields (Name, Email, Phone, Location, URLs)
  * Strictly dispatches DOM input/change events to notify dynamic frameworks (React, Workday, Angular).
- * Never touches passwords, payment details, or non-whitelisted sensitive inputs.
+ * Never touches passwords, payment details, OTPs, or non-whitelisted sensitive inputs.
+ * Returns detailed filled and skipped fields with explanation reasons.
  */
 
 import type { CareerProfile } from "@jobos/contracts";
 import type { AutofillResult, DetectedFormField } from "../types";
+import { isElementSensitive } from "./security";
 
 export function autofillSafeFields(
   document: Document,
@@ -31,6 +33,8 @@ export function autofillSafeFields(
     (profile.preferences_json?.linkedin as string) || "https://linkedin.com/in/alexchen";
   const github = (profile.preferences_json?.github as string) || "https://github.com/alexchen";
   const location = profile.location || "San Francisco, CA";
+  const city = location.split(",")[0]?.trim() || location;
+  const state = (location.includes(",") ? location.split(",")[1]?.trim() : "") || "CA";
 
   for (const field of fields) {
     if (field.confidence < 0.7) {
@@ -42,8 +46,15 @@ export function autofillSafeFields(
 
     const el = document.querySelector(field.selector) as
       HTMLInputElement | HTMLSelectElement | null;
+
     if (!el) {
-      result.unfilledFields.push(`${field.label} (element not found)`);
+      result.unfilledFields.push(`${field.label} (element not found in DOM)`);
+      continue;
+    }
+
+    // Critical security double-check
+    if (isElementSensitive(el)) {
+      result.unfilledFields.push(`${field.label} (sensitive input blocked)`);
       continue;
     }
 
@@ -71,13 +82,19 @@ export function autofillSafeFields(
         valToFill = github;
         break;
       case "city":
-        valToFill = location.split(",")[0]?.trim() || location;
+        valToFill = city;
+        break;
+      case "state":
+        valToFill = state;
         break;
       case "address":
         valToFill = "123 Tech Way";
         break;
       case "postalCode":
         valToFill = "94105";
+        break;
+      case "website":
+        valToFill = (profile.preferences_json?.website as string) || "https://alexchen.dev";
         break;
       default:
         valToFill = "";
@@ -92,7 +109,7 @@ export function autofillSafeFields(
         value: valToFill,
       });
     } else {
-      result.unfilledFields.push(field.label);
+      result.unfilledFields.push(`${field.label} (not found in candidate profile)`);
     }
   }
 

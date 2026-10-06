@@ -1,5 +1,13 @@
 /**
  * JobOS Extension Popup Controller
+ *
+ * Implements Phase 7: Intelligent Apply
+ * - ATS & Page detection
+ * - JobOS Job Identification & Explainable match
+ * - Safe profile fields autofill with skipped fields reporting
+ * - Evidence-grounded question drafting
+ * - User review, inline edit, and explicit approval before DOM insertion
+ * - Manual submission handoff & Application Capsule capture
  */
 
 import { jobosApi } from "../api";
@@ -25,12 +33,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const atsBadge = document.getElementById("atsBadge")!;
   const jobTitle = document.getElementById("jobTitle")!;
   const jobCompany = document.getElementById("jobCompany")!;
+  const jobMatchStatus = document.getElementById("jobMatchStatus")!;
   const matchScore = document.getElementById("matchScore")!;
   const matchSub = document.getElementById("matchSub")!;
   const fieldCount = document.getElementById("fieldCount")!;
   const questionCount = document.getElementById("questionCount")!;
   const autofillBtn = document.getElementById("autofillBtn") as HTMLButtonElement;
   const autofillStatus = document.getElementById("autofillStatus")!;
+  const skippedFieldsList = document.getElementById("skippedFieldsList")!;
   const questionList = document.getElementById("questionList")!;
   const captureBtn = document.getElementById("captureBtn") as HTMLButtonElement;
   const captureSuccess = document.getElementById("captureSuccess")!;
@@ -90,16 +100,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (identifyRes.matched && identifyRes.job) {
         matchedJob = identifyRes.job;
+        jobMatchStatus.innerText = "✓ Matched to JobOS library";
         const match: JobMatch = await jobosApi.getJobMatch(matchedJob.id, currentProfile.id);
         matchScore.innerText = `${match.overall_score}%`;
         matchSub.innerText = `${match.strengths_json.length} Strengths Verified`;
       } else {
+        jobMatchStatus.innerText = "New Discovery (not yet saved)";
         matchScore.innerText = "--";
-        matchSub.innerText = "New Discovery";
+        matchSub.innerText = "Ready to Apply";
       }
     } catch (_e) {
+      jobMatchStatus.innerText = "Ready to Apply";
       matchScore.innerText = "--";
-      matchSub.innerText = "Ready to Apply";
+      matchSub.innerText = "Application Assistant Ready";
     }
   }
 
@@ -147,27 +160,42 @@ document.addEventListener("DOMContentLoaded", async () => {
             job_id: matchedJob?.id || null,
           });
 
-          draftAnswers[selector] = draftRes.draft_answer;
+          const initialDraft = draftRes.draft_answer;
+          const evidenceCount = (draftRes.evidence_used || []).length;
 
           container.classList.remove("hidden");
           container.innerHTML = `
-            <div class="draft-box">${escapeHtml(draftRes.draft_answer)}</div>
+            <div class="draft-meta-note">
+              ✓ Grounded in ${evidenceCount > 0 ? evidenceCount + " career evidence item(s)" : "verified career profile"}. Edit as needed before inserting:
+            </div>
+            <textarea class="draft-textarea" placeholder="Review or edit your answer...">${escapeHtml(initialDraft)}</textarea>
             <button class="btn btn-accent insert-btn">Approve & Insert into Field</button>
           `;
 
+          const textAreaEl = container.querySelector(".draft-textarea") as HTMLTextAreaElement;
           const insertBtn = container.querySelector(".insert-btn") as HTMLButtonElement;
+
           insertBtn.addEventListener("click", () => {
+            const approvedText = textAreaEl.value.trim();
+            if (!approvedText) {
+              alert("Draft answer cannot be empty.");
+              return;
+            }
+
             chrome.tabs.query({ active: true, currentWindow: true }, ([t]) => {
               if (t?.id) {
                 chrome.tabs.sendMessage(
                   t.id,
                   {
                     type: "INSERT_QUESTION_ANSWER",
-                    payload: { selector, answerText: draftRes.draft_answer },
+                    payload: { selector, answerText: approvedText },
                   },
                   () => {
-                    insertBtn.innerText = "✓ Inserted!";
+                    // Update recorded draft answer with the candidate's approved/edited version
+                    draftAnswers[selector] = approvedText;
+                    insertBtn.innerText = "✓ Approved & Inserted!";
                     insertBtn.disabled = true;
+                    textAreaEl.disabled = true;
                   }
                 );
               }
@@ -199,6 +227,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           autofillBtn.innerText = "Autofill Safe Fields";
           autofillStatus.classList.remove("hidden");
           autofillStatus.innerText = `✓ Successfully filled ${result.filledFieldsCount} safe fields.`;
+
+          // Display skipped fields and reasons if any
+          if (result.unfilledFields && result.unfilledFields.length > 0) {
+            skippedFieldsList.classList.remove("hidden");
+            const listHtml = result.unfilledFields
+              .map((reason) => `<div class="skipped-item">${escapeHtml(reason)}</div>`)
+              .join("");
+            skippedFieldsList.innerHTML = `
+              <div class="skipped-title">Skipped fields (manual review):</div>
+              ${listHtml}
+            `;
+          } else {
+            skippedFieldsList.classList.add("hidden");
+          }
         }
       );
     });
@@ -221,11 +263,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Only capture questions that have genuine content and user approval
     const recordedQuestions = detectedQuestions
-      .filter((q) => Boolean(draftAnswers[q.selector] || q.currentValue))
+      .filter((q) => Boolean(draftAnswers[q.selector]))
       .map((q) => ({
         questionText: q.questionText,
-        answerText: draftAnswers[q.selector] || q.currentValue || "",
-        source: draftAnswers[q.selector] ? "jobos_assistant" : "candidate_manual",
+        answerText: draftAnswers[q.selector] || "",
+        source: "jobos_assistant",
         userApproved: true,
       }));
 

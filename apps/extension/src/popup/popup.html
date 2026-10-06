@@ -27,6 +27,7 @@
         <div class="job-meta">
           <h2 id="jobTitle" class="job-title">Job Title</h2>
           <div id="jobCompany" class="job-company">Company</div>
+          <div id="jobMatchStatus" class="job-status-sub">Checking JobOS library...</div>
         </div>
         <div id="matchSection" class="match-banner">
           <div class="match-score" id="matchScore">--%</div>
@@ -43,9 +44,10 @@
           <h3 class="section-title">1. Safe Field Autofill</h3>
           <span class="field-count" id="fieldCount">0 fields</span>
         </div>
-        <p class="section-desc">Fills standard profile info (Name, Email, Phone, URLs). Ambiguous fields left for your review.</p>
+        <p class="section-desc">Fills verified profile fields (Name, Email, Phone, URLs). Ambiguous & sensitive inputs are strictly skipped.</p>
         <button id="autofillBtn" class="btn btn-primary">Autofill Safe Fields</button>
         <div id="autofillStatus" class="status-msg hidden"></div>
+        <div id="skippedFieldsList" class="skipped-container hidden"></div>
       </section>
 
       <!-- Application Questions Assistant -->
@@ -54,7 +56,7 @@
           <h3 class="section-title">2. Free-Text Questions</h3>
           <span class="field-count" id="questionCount">0 found</span>
         </div>
-        <p class="section-desc">Drafts evidence-backed answers. Never fabricates claims. You review and approve before insertion.</p>
+        <p class="section-desc">Drafts evidence-backed answers. Never fabricates claims. Review, edit, and approve before insertion.</p>
         <div id="questionList" class="question-list"></div>
       </section>
 

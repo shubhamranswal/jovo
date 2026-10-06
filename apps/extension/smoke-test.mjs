@@ -33,8 +33,13 @@ const __dirname = path.dirname(__filename);
 console.log("=== JobOS Chrome Extension Smoke Test & Flow Verification ===\n");
 
 // STEP 1: Verify dist/ unpacked directory completeness
-const extRoot = path.resolve(process.cwd());
-const distDir = path.resolve(extRoot, "dist");
+let distDir = path.resolve(__dirname, "dist");
+if (!fs.existsSync(distDir)) {
+  distDir = path.resolve(process.cwd(), "apps/extension/dist");
+}
+if (!fs.existsSync(distDir)) {
+  distDir = path.resolve(process.cwd(), "dist");
+}
 assert.ok(fs.existsSync(distDir), "dist/ directory must exist");
 assert.ok(fs.existsSync(path.join(distDir, "manifest.json")), "dist/manifest.json must exist for Chrome unpacked loading");
 assert.ok(fs.existsSync(path.join(distDir, "background.js")), "dist/background.js service worker must exist");
@@ -50,9 +55,12 @@ assert.strictEqual(manifest.background.service_worker, "background.js", "Backgro
 console.log("1. ✓ Extension loads successfully from unpacked dist/ (MV3 bundle verified)");
 
 // STEP 2 & 3: Load fixture and test ATS, Company, and Role extraction
-let fixturePath = path.resolve(extRoot, "../../tests/fixtures/workday_application.html");
+let fixturePath = path.resolve(__dirname, "../../tests/fixtures/workday_application.html");
 if (!fs.existsSync(fixturePath)) {
-  fixturePath = path.resolve(extRoot, "tests/fixtures/workday_application.html");
+  fixturePath = path.resolve(process.cwd(), "tests/fixtures/workday_application.html");
+}
+if (!fs.existsSync(fixturePath)) {
+  fixturePath = path.resolve(process.cwd(), "apps/extension/tests/fixtures/workday_application.html");
 }
 const fixtureHtml = fs.readFileSync(fixturePath, "utf-8");
 const fixtureUrl = "https://acmecloud.wd1.myworkdayjobs.com/en-US/careers/job/REQ-84920";

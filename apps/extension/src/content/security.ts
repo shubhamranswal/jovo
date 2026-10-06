@@ -2,8 +2,8 @@
  * Security & Data Sanitization Rules for JobOS Extension
  *
  * Enforces strict allowlisting and blocklisting:
- * - Never captures passwords, tokens, cookies, auth headers, payment details, or government IDs.
- * - Filters inputs based on type, autocomplete attribute, name, id, and aria/label text.
+ * - Never captures passwords, tokens, cookies, auth headers, payment details, OTPs, or government IDs.
+ * - Filters inputs based on tag, type, autocomplete attribute, name, id, and aria/label text.
  * - Ensures only genuine application fields and application-specific Q&A are captured.
  */
 
@@ -47,16 +47,27 @@ const SENSITIVE_KEYWORDS = [
   "passport",
   "driver_license",
   "drivers_license",
+  "pan_card",
+  "pan_number",
   "card",
   "creditcard",
+  "credit_card",
+  "debit_card",
   "cvv",
   "cvc",
   "bank",
   "routing",
   "account_number",
+  "iban",
+  "swift",
   "pin",
   "otp",
+  "one_time_password",
+  "one_time_code",
   "security_code",
+  "verification_code",
+  "maiden_name",
+  "security_question",
 ];
 
 // Blocklisted autocomplete values (standard browser autocomplete specs)
@@ -79,7 +90,7 @@ const BLOCKLISTED_AUTOCOMPLETE = new Set([
 ]);
 
 /**
- * Checks if an element is dangerous or sensitive (passwords, tokens, payment, government ID).
+ * Checks if an element is dangerous or sensitive (passwords, tokens, payment, government ID, OTP).
  * Returns true if the element MUST be blocked.
  */
 export function isElementSensitive(el: HTMLElement): boolean {
@@ -105,6 +116,7 @@ export function isElementSensitive(el: HTMLElement): boolean {
     el.getAttribute("data-automation-id"),
     el.getAttribute("aria-label"),
     el.getAttribute("placeholder"),
+    el.className,
   ]
     .filter(Boolean)
     .join(" ")
@@ -150,7 +162,7 @@ export function sanitizeCapturedFormFields(
 
 /**
  * Validates whether a detected question is a genuine application question.
- * Filters out authentication prompts, CAPTCHA hints, or arbitrary empty fields.
+ * Filters out authentication prompts, CAPTCHA hints, search inputs, or cookie queries.
  */
 export function isGenuineApplicationQuestion(questionText: string): boolean {
   if (!questionText || questionText.trim().length < 5) {
@@ -159,22 +171,32 @@ export function isGenuineApplicationQuestion(questionText: string): boolean {
 
   const lower = questionText.toLowerCase();
 
-  // Must not be a password/login/security question
+  // Must not be a password/login/security/OTP question
   for (const kw of SENSITIVE_KEYWORDS) {
     if (lower.includes(kw)) {
       return false;
     }
   }
 
-  // Filter out site search bars, cookie banners, navigation textareas
+  // Filter out site search bars, cookie banners, navigation textareas, login prompts
   const nonQuestionKeywords = [
-    "search",
+    "search jobs",
+    "search roles",
+    "search careers",
+    "search keyword",
+    "search query",
     "cookie",
     "privacy policy",
     "terms of service",
+    "terms of use",
     "subscribe to newsletter",
     "leave a comment",
     "feedback on our website",
+    "sign in",
+    "log in",
+    "login",
+    "register an account",
+    "captcha",
   ];
 
   for (const nq of nonQuestionKeywords) {

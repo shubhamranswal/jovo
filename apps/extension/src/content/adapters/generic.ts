@@ -1,14 +1,11 @@
 /**
  * Generic ATS Adapter
  * Fallback for Greenhouse, Lever, standard company careers pages, etc.
+ * Uses semantic classification, excludes non-application forms (search, login, cookie, newsletter).
  */
 
-import type {
-  DetectedFormField,
-  DetectedQuestion,
-  ExtractedJobMetadata,
-  SafeFieldType,
-} from "../../types";
+import type { DetectedFormField, DetectedQuestion, ExtractedJobMetadata } from "../../types";
+import { classifyFieldSemantics, extractAccessibleLabel } from "../mapper";
 import { isElementSensitive, isGenuineApplicationQuestion } from "../security";
 import type { AtsAdapter } from "./types";
 
@@ -84,7 +81,12 @@ export class GenericAdapter implements AtsAdapter {
 
   detectFormFields(document: Document): DetectedFormField[] {
     const fields: DetectedFormField[] = [];
-    const inputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+
+    // Find candidate application forms or container
+    const applicationForm = this.findApplicationForm(document);
+    const scope: Document | HTMLElement = applicationForm || document;
+
+    const inputs = scope.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
       'input:not([type="hidden"]):not([type="submit"]):not([type="password"]):not([type="file"]), select'
     );
 
@@ -93,21 +95,26 @@ export class GenericAdapter implements AtsAdapter {
         continue;
       }
 
+      // Skip elements clearly in search or navigation headers
+      if (this.isInUnrelatedSection(el)) {
+        continue;
+      }
+
       const name = el.getAttribute("name") || "";
       const id = el.id || "";
-      const label = this.getLabelForElement(el);
+      const label = extractAccessibleLabel(el, document);
       const type = (el as HTMLInputElement).type || "text";
 
-      const match = this.classifyField(name, id, label, type);
-      if (match.fieldType !== "unknown" && match.confidence >= 0.7) {
+      const classification = classifyFieldSemantics(label, name, id, "", type);
+      if (classification.fieldType !== "unknown" && classification.confidence >= 0.7) {
         const selector = id ? `#${id}` : name ? `${el.tagName.toLowerCase()}[name="${name}"]` : "";
 
         if (selector && !fields.some((f) => f.selector === selector)) {
           fields.push({
-            name: name || id || match.fieldType,
-            label: label || name || id,
-            fieldType: match.fieldType,
-            confidence: match.confidence,
+            name: name || id || classification.fieldType,
+            label: label || name || id || classification.fieldType,
+            fieldType: classification.fieldType,
+            confidence: classification.confidence,
             selector,
             currentValue: el.value,
           });
@@ -120,15 +127,18 @@ export class GenericAdapter implements AtsAdapter {
 
   detectQuestions(document: Document): DetectedQuestion[] {
     const questions: DetectedQuestion[] = [];
-    const textareas = document.querySelectorAll<HTMLTextAreaElement>("textarea");
+    const applicationForm = this.findApplicationForm(document);
+    const scope: Document | HTMLElement = applicationForm || document;
+
+    const textareas = scope.querySelectorAll<HTMLTextAreaElement>("textarea");
 
     let idx = 0;
     for (const ta of textareas) {
-      if (isElementSensitive(ta)) {
+      if (isElementSensitive(ta) || this.isInUnrelatedSection(ta)) {
         continue;
       }
 
-      const label = this.getLabelForElement(ta) || `Application Question #${idx + 1}`;
+      const label = extractAccessibleLabel(ta, document) || `Application Question #${idx + 1}`;
       if (!isGenuineApplicationQuestion(label)) {
         continue;
       }
@@ -151,73 +161,51 @@ export class GenericAdapter implements AtsAdapter {
     return questions;
   }
 
-  private getLabelForElement(el: HTMLElement): string {
-    const doc = el.ownerDocument || document;
-    if (el.id) {
-      const labelEl = doc.querySelector(`label[for="${el.id}"]`);
-      if (labelEl) return (labelEl.textContent || (labelEl as HTMLElement).innerText || "").trim();
+  /**
+   * Identifies primary application form, ignoring login/search/newsletter forms.
+   */
+  private findApplicationForm(doc: Document): HTMLElement | null {
+    const forms = doc.querySelectorAll<HTMLFormElement>("form");
+    for (const form of forms) {
+      const formText = (
+        form.getAttribute("id") +
+        " " +
+        form.getAttribute("name") +
+        " " +
+        form.getAttribute("class") +
+        " " +
+        form.getAttribute("action")
+      ).toLowerCase();
+
+      // Skip search forms, login forms, newsletter forms
+      if (
+        form.getAttribute("role") === "search" ||
+        formText.includes("search") ||
+        formText.includes("login") ||
+        formText.includes("signin") ||
+        formText.includes("newsletter") ||
+        formText.includes("subscribe") ||
+        formText.includes("cookie")
+      ) {
+        continue;
+      }
+
+      // Check if it has email or resume or submit inputs
+      const hasJobInputs = form.querySelector(
+        'input[type="email"], input[name*="name"], textarea, input[type="file"]'
+      );
+      if (hasJobInputs) {
+        return form;
+      }
     }
-    const parentLabel = el.closest("label");
-    if (parentLabel) return (parentLabel.textContent || parentLabel.innerText || "").trim();
 
-    const ariaLabel = el.getAttribute("aria-label");
-    if (ariaLabel) return ariaLabel.trim();
-
-    const placeholder = el.getAttribute("placeholder");
-    if (placeholder) return placeholder.trim();
-
-    const container = el.parentElement;
-    if (container) {
-      const labelTag = container.querySelector("label, span, p");
-      if (labelTag)
-        return (labelTag.textContent || (labelTag as HTMLElement).innerText || "").trim();
-    }
-
-    return "";
+    return null;
   }
 
-  private classifyField(
-    name: string,
-    id: string,
-    label: string,
-    type: string
-  ): { fieldType: SafeFieldType | "unknown"; confidence: number } {
-    const text = `${name} ${id} ${label}`.toLowerCase();
-
-    if (type === "email" || text.includes("email")) {
-      return { fieldType: "email", confidence: 0.95 };
-    }
-    if (type === "tel" || text.includes("phone") || text.includes("mobile")) {
-      return { fieldType: "phone", confidence: 0.95 };
-    }
-    if (text.includes("first name") || text.includes("firstname") || text.includes("fname")) {
-      return { fieldType: "firstName", confidence: 0.95 };
-    }
-    if (text.includes("last name") || text.includes("lastname") || text.includes("lname")) {
-      return { fieldType: "lastName", confidence: 0.95 };
-    }
-    if (text.includes("full name") || text.includes("fullname") || text === "name") {
-      return { fieldType: "fullName", confidence: 0.9 };
-    }
-    if (text.includes("linkedin")) {
-      return { fieldType: "linkedin", confidence: 0.95 };
-    }
-    if (text.includes("github")) {
-      return { fieldType: "github", confidence: 0.95 };
-    }
-    if (text.includes("website") || text.includes("portfolio")) {
-      return { fieldType: "website", confidence: 0.9 };
-    }
-    if (text.includes("address line") || text.includes("street")) {
-      return { fieldType: "address", confidence: 0.9 };
-    }
-    if (text.includes("city")) {
-      return { fieldType: "city", confidence: 0.9 };
-    }
-    if (text.includes("postal") || text.includes("zip")) {
-      return { fieldType: "postalCode", confidence: 0.9 };
-    }
-
-    return { fieldType: "unknown", confidence: 0.0 };
+  private isInUnrelatedSection(el: HTMLElement): boolean {
+    const parentContainer = el.closest(
+      'header, nav, footer, [role="search"], [id*="cookie"], [class*="cookie"], [id*="search"], [id*="newsletter"]'
+    );
+    return parentContainer !== null;
   }
 }
