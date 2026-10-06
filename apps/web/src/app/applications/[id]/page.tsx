@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import type { ApplicationCapsule, ApplicationStatus } from "@jobos/contracts";
+import type { ApplicationCapsule, ApplicationStatus, FollowUp } from "@jobos/contracts";
 import { api } from "../../../lib/api";
 
 interface TimelineEvent {
@@ -13,6 +13,16 @@ interface TimelineEvent {
   badge: string;
   badgeType: "blue" | "green" | "amber" | "gray";
   description: string;
+}
+
+interface QuestionItem {
+  id: string;
+  question: string;
+  category: "Technical" | "Behavioral" | "Application-Specific" | "Application-Followup";
+  why_asked: string;
+  relevant_evidence: string;
+  prep_notes: string;
+  user_answer?: string | null;
 }
 
 export default function ApplicationDetailPage() {
@@ -27,6 +37,31 @@ export default function ApplicationDetailPage() {
   >("timeline");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [generatingPrep, setGeneratingPrep] = useState(false);
+
+  // Follow-up state
+  const [followUpType, setFollowUpType] = useState("interview_follow_up");
+  const [followUpDate, setFollowUpDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 3);
+    return d.toISOString().split("T")[0];
+  });
+  const [followUpNotes, setFollowUpNotes] = useState("");
+  const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
+  const [updatingFollowUpId, setUpdatingFollowUpId] = useState<string | null>(null);
+
+  // Question practice interactive notes (stored in local component state)
+  const [practiceNotes, setPracticeNotes] = useState<Record<string, string>>({});
+  const [questionCategoryFilter, setQuestionCategoryFilter] = useState<string>("All");
+
+  const reloadCapsule = async () => {
+    if (!applicationId) return;
+    try {
+      const data = await api.getApplicationCapsule(applicationId);
+      setCapsule(data);
+    } catch (err: unknown) {
+      console.error("Failed to reload capsule", err);
+    }
+  };
 
   useEffect(() => {
     async function loadCapsule() {
@@ -66,15 +101,50 @@ export default function ApplicationDetailPage() {
     if (!capsule) return;
     setGeneratingPrep(true);
     try {
-      await api.generateInterviewPrep(capsule.application.id);
-      // Reload capsule
-      const reloaded = await api.getApplicationCapsule(capsule.application.id);
-      setCapsule(reloaded);
+      await api.generateInterviewPrep(capsule.application.id, "Technical");
+      await reloadCapsule();
       setActiveTab("prep");
     } catch (err: unknown) {
       alert(`Interview prep generation failed: ${err instanceof Error ? err.message : "Error"}`);
     } finally {
       setGeneratingPrep(false);
+    }
+  };
+
+  const handleCreateFollowUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!capsule || !followUpDate) return;
+    setSubmittingFollowUp(true);
+    try {
+      const dueIso = new Date(followUpDate).toISOString();
+      await api.createFollowUp(capsule.application.id, {
+        type: followUpType,
+        due_at: dueIso,
+        notes: followUpNotes,
+      });
+      setFollowUpNotes("");
+      await reloadCapsule();
+    } catch (err: unknown) {
+      alert(`Failed to schedule follow-up: ${err instanceof Error ? err.message : "Error"}`);
+    } finally {
+      setSubmittingFollowUp(false);
+    }
+  };
+
+  const handleUpdateFollowUp = async (
+    followUpId: string,
+    targetStatus: "Completed" | "Skipped" | "Pending"
+  ) => {
+    setUpdatingFollowUpId(followUpId);
+    try {
+      await api.updateFollowUp(followUpId, {
+        status: targetStatus,
+      });
+      await reloadCapsule();
+    } catch (err: unknown) {
+      alert(`Failed to update follow-up: ${err instanceof Error ? err.message : "Error"}`);
+    } finally {
+      setUpdatingFollowUpId(null);
     }
   };
 
@@ -108,6 +178,22 @@ export default function ApplicationDetailPage() {
   const { application, snapshot, documents, answers, interviews, follow_ups } = capsule;
   const resumeDoc = documents.find((d) => d.document_type === "resume");
   const coverLetterDoc = documents.find((d) => d.document_type === "cover_letter");
+
+  // Next pending follow-up banner
+  const nextPendingFollowUp = follow_ups.find(
+    (f: FollowUp) => f.status === "Pending" || !f.completed_at
+  );
+
+  // Latest interview prep data
+  const latestInterview = interviews.length > 0 ? interviews[interviews.length - 1] : null;
+  const prepJson = (latestInterview?.preparation_json as Record<string, any>) || {};
+  const readiness = prepJson.readiness as
+    { category: string; explanation: string; signals: string[] } | undefined;
+  const structuredQuestions = (prepJson.structured_questions as QuestionItem[]) || [];
+  const filteredQuestions =
+    questionCategoryFilter === "All"
+      ? structuredQuestions
+      : structuredQuestions.filter((q) => q.category === questionCategoryFilter);
 
   // Build chronological timeline events
   const timelineEvents: TimelineEvent[] = [];
@@ -191,15 +277,31 @@ export default function ApplicationDetailPage() {
     });
   });
 
-  follow_ups.forEach((f, idx) => {
+  follow_ups.forEach((f: FollowUp, idx: number) => {
+    // Scheduled event
     timelineEvents.push({
-      id: `followup-${idx}`,
+      id: `followup-due-${idx}`,
       date: new Date(f.due_at),
-      title: `Follow-up Touchpoint: ${f.type}`,
-      badge: f.completed_at ? "Completed" : "Scheduled",
-      badgeType: f.completed_at ? "green" : "amber",
-      description: f.notes || `Scheduled follow-up reminder for candidate.`,
+      title: `Follow-up Due: ${f.type.replace(/_/g, " ")}`,
+      badge: "Scheduled",
+      badgeType: "amber",
+      description: f.notes ? `Note: ${f.notes}` : "Follow-up milestone scheduled.",
     });
+
+    // Completed or Skipped event
+    if (f.completed_at) {
+      const isSkipped = f.status === "Skipped" || (f.notes && f.notes.includes("[SKIPPED]"));
+      timelineEvents.push({
+        id: `followup-done-${idx}`,
+        date: new Date(f.completed_at),
+        title: `Follow-up ${isSkipped ? "Skipped" : "Completed"}: ${f.type.replace(/_/g, " ")}`,
+        badge: isSkipped ? "Skipped" : "Completed",
+        badgeType: isSkipped ? "gray" : "green",
+        description: isSkipped
+          ? "Candidate explicitly marked this follow-up as skipped."
+          : `Candidate completed this follow-up touchpoint for ${application.target_company}.`,
+      });
+    }
   });
 
   timelineEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -255,10 +357,56 @@ export default function ApplicationDetailPage() {
               job posting is taken down or modified, your exact JD snapshot, tailored resume
               version, and cover letter remain frozen and accessible here forever.
             </p>
+
+            {/* Next Follow-up Alert Banner */}
+            {nextPendingFollowUp && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  padding: "12px 16px",
+                  background: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  borderRadius: "var(--radius-sm)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  maxWidth: "700px",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    <span className="badge badge-amber">Next Follow-up</span>
+                    <strong style={{ fontSize: "0.85rem" }}>
+                      Due: {new Date(nextPendingFollowUp.due_at).toLocaleDateString()}
+                    </strong>
+                    <span className="text-xs text-muted">
+                      ({nextPendingFollowUp.type.replace(/_/g, " ")})
+                    </span>
+                  </div>
+                  <div className="text-xs text-dim">
+                    {nextPendingFollowUp.notes || "Follow-up action item pending."}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab("followups")}
+                  className="btn btn-outline btn-sm"
+                  style={{ fontSize: "0.75rem", padding: "6px 12px" }}
+                >
+                  Manage →
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions & Status Control */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: "180px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: "200px" }}>
             <div className="input-group">
               <label className="label" style={{ fontSize: "0.75rem" }}>
                 Update Status
@@ -285,10 +433,10 @@ export default function ApplicationDetailPage() {
             <button
               onClick={handleTriggerPrep}
               disabled={generatingPrep}
-              className="btn btn-secondary btn-sm"
+              className="btn btn-primary btn-sm"
               style={{ width: "100%", marginTop: "4px" }}
             >
-              {generatingPrep ? "Preparing..." : "⚡ Generate Interview Prep"}
+              {generatingPrep ? "Synthesizing Prep..." : "⚡ Prepare for Interview"}
             </button>
           </div>
         </div>
@@ -389,7 +537,9 @@ export default function ApplicationDetailPage() {
                           ? "#34d399"
                           : evt.badgeType === "amber"
                             ? "#fbbf24"
-                            : "#60a5fa",
+                            : evt.badgeType === "gray"
+                              ? "#94a3b8"
+                              : "#60a5fa",
                       border: "2px solid var(--bg-card)",
                       boxShadow: "0 0 0 2px var(--border-color)",
                     }}
@@ -597,122 +747,604 @@ export default function ApplicationDetailPage() {
         </div>
       )}
 
-      {/* Tab 5: Interview Preparation Grounded in Capsule */}
+      {/* Tab 5: Grounded Interview Preparation */}
       {activeTab === "prep" && (
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="title-md">Grounded Interview Preparation</h3>
-              <p className="text-xs text-muted">
-                Tailored interview questions based on the exact job requirements and your submitted
-                materials
-              </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          {/* Header Action */}
+          <div className="card">
+            <div className="card-header" style={{ marginBottom: 0 }}>
+              <div>
+                <h3 className="title-md">Grounded Interview Preparation</h3>
+                <p className="text-xs text-muted">
+                  Synthesized strictly from the frozen JD, exact submitted resume, approved form
+                  answers, and verified career evidence
+                </p>
+              </div>
+              <button
+                onClick={handleTriggerPrep}
+                disabled={generatingPrep}
+                className="btn btn-primary btn-sm"
+              >
+                {generatingPrep ? "Regenerating..." : "⚡ Regenerate Prep"}
+              </button>
             </div>
-            <button
-              onClick={handleTriggerPrep}
-              disabled={generatingPrep}
-              className="btn btn-primary btn-sm"
-            >
-              {generatingPrep ? "Regenerating..." : "Regenerate Prep"}
-            </button>
           </div>
 
           {interviews.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 20px" }}>
-              <p className="text-sm text-muted" style={{ marginBottom: "16px" }}>
-                Interview preparation has not been generated for this application yet.
+            <div className="card" style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🎯</div>
+              <h3 className="title-md" style={{ marginBottom: "8px" }}>
+                Ready to Prepare for {application.target_role} at {application.target_company}?
+              </h3>
+              <p
+                className="text-sm text-muted"
+                style={{ maxWidth: "600px", margin: "0 auto 24px" }}
+              >
+                JobOS will analyze your exact submitted materials, identify likely technical and
+                behavioral questions, detect any profile evidence gaps, and prepare you for
+                interviewer probing on your submitted answers.
               </p>
-              <button onClick={handleTriggerPrep} className="btn btn-primary btn-sm">
-                Generate Grounded Questions & Strategy
+              <button
+                onClick={handleTriggerPrep}
+                disabled={generatingPrep}
+                className="btn btn-primary"
+              >
+                {generatingPrep ? "Analyzing Capsule..." : "Prepare for Interview"}
               </button>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {interviews.map((item, idx) => (
+            <>
+              {/* Role Summary Banner */}
+              {prepJson.role_summary && (
                 <div
-                  key={item.id || idx}
+                  className="card"
                   style={{
-                    padding: "20px",
-                    background: "var(--bg-subtle)",
-                    border: "1px solid var(--border-color)",
-                    borderRadius: "var(--radius-sm)",
+                    borderLeft: "4px solid var(--primary)",
+                    background: "rgba(37, 99, 235, 0.05)",
                   }}
                 >
-                  <div
+                  <h4
+                    className="title-sm"
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "10px",
+                      color: "var(--primary)",
+                      marginBottom: "6px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      fontSize: "0.75rem",
                     }}
                   >
-                    <strong style={{ fontSize: "1rem" }}>{item.stage} Stage Preparation</strong>
-                    <span className="badge badge-blue">
-                      {item.scheduled_at
-                        ? new Date(item.scheduled_at).toLocaleDateString()
-                        : "Upcoming"}
+                    Employer Priorities (From Frozen JD)
+                  </h4>
+                  <p className="text-sm" style={{ lineHeight: "1.6", color: "#e2e8f0" }}>
+                    {prepJson.role_summary}
+                  </p>
+                </div>
+              )}
+
+              {/* Explainable Readiness Model */}
+              {readiness && (
+                <div className="card">
+                  <div className="card-header">
+                    <div>
+                      <h4 className="title-sm">Interview Readiness Assessment</h4>
+                      <p className="text-xs text-muted">
+                        Explainable fit analysis based on verified evidence vs. job requirements (no
+                        fake percentages)
+                      </p>
+                    </div>
+                    <span
+                      className={`badge ${
+                        readiness.category === "Strong"
+                          ? "badge-green"
+                          : readiness.category === "Evidence Gap"
+                            ? "badge-amber"
+                            : "badge-blue"
+                      }`}
+                      style={{ fontSize: "0.85rem", padding: "4px 12px" }}
+                    >
+                      Readiness: {readiness.category}
                     </span>
                   </div>
 
-                  {item.notes && (
-                    <p className="text-sm text-muted" style={{ marginBottom: "14px" }}>
-                      {item.notes}
-                    </p>
-                  )}
+                  <p
+                    className="text-sm"
+                    style={{ marginBottom: "16px", lineHeight: "1.6", color: "#cbd5e1" }}
+                  >
+                    {readiness.explanation}
+                  </p>
 
-                  {item.preparation_json && Object.keys(item.preparation_json).length > 0 && (
-                    <div className="pre-box" style={{ maxHeight: "300px" }}>
-                      {JSON.stringify(item.preparation_json, null, 2)}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      background: "var(--bg-subtle)",
+                      padding: "14px",
+                      borderRadius: "var(--radius-sm)",
+                    }}
+                  >
+                    <div
+                      className="label"
+                      style={{ fontSize: "0.75rem", textTransform: "uppercase" }}
+                    >
+                      Readiness Signals:
                     </div>
-                  )}
+                    {readiness.signals?.map((sig: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="text-xs text-dim"
+                        style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                      >
+                        <span style={{ color: "var(--primary)" }}>•</span> {sig}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* Flagged Evidence Gaps (Anti-Hallucination) */}
+              {prepJson.evidence_gaps && prepJson.evidence_gaps.length > 0 && (
+                <div
+                  className="card"
+                  style={{
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    background: "rgba(245, 158, 11, 0.04)",
+                  }}
+                >
+                  <div className="card-header">
+                    <div>
+                      <h4 className="title-sm" style={{ color: "#fbbf24" }}>
+                        ⚠️ Stated Job Requirements Lacking Verified Evidence
+                      </h4>
+                      <p className="text-xs text-muted">
+                        JobOS strictly avoids inventing candidate background. Be prepared to address
+                        how you ramp up or bridge these areas:
+                      </p>
+                    </div>
+                    <span className="badge badge-amber">
+                      {prepJson.evidence_gaps.length} Gaps Flagged
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {prepJson.evidence_gaps.map((gap: string, i: number) => (
+                      <div
+                        key={i}
+                        className="text-xs"
+                        style={{
+                          padding: "8px 12px",
+                          background: "rgba(0,0,0,0.2)",
+                          borderRadius: "4px",
+                          color: "#fde68a",
+                          borderLeft: "3px solid #fbbf24",
+                        }}
+                      >
+                        {gap}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Practice Likely Questions */}
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h4 className="title-sm">Grounded Practice Questions</h4>
+                    <p className="text-xs text-muted">
+                      Derived from required technologies, submitted resume accomplishments, and
+                      approved form answers
+                    </p>
+                  </div>
+                  {/* Category Filter */}
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    {[
+                      "All",
+                      "Technical",
+                      "Behavioral",
+                      "Application-Specific",
+                      "Application-Followup",
+                    ].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setQuestionCategoryFilter(cat)}
+                        className={`btn btn-sm ${questionCategoryFilter === cat ? "btn-primary" : "btn-secondary"}`}
+                        style={{ fontSize: "0.75rem", padding: "4px 8px" }}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {filteredQuestions.length === 0 ? (
+                  <div
+                    className="text-sm text-muted"
+                    style={{ textAlign: "center", padding: "30px 0" }}
+                  >
+                    No questions under this category.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    {filteredQuestions.map((q, idx) => {
+                      const isEvidenceGap =
+                        q.relevant_evidence.includes("Evidence not found") ||
+                        q.relevant_evidence.includes("unverified");
+                      return (
+                        <div
+                          key={q.id || idx}
+                          style={{
+                            padding: "18px",
+                            background: "var(--bg-subtle)",
+                            border: "1px solid var(--border-color)",
+                            borderRadius: "var(--radius-sm)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              marginBottom: "10px",
+                              gap: "10px",
+                            }}
+                          >
+                            <span
+                              className={`badge ${
+                                q.category === "Technical"
+                                  ? "badge-blue"
+                                  : q.category === "Behavioral"
+                                    ? "badge-green"
+                                    : "badge-amber"
+                              }`}
+                            >
+                              {q.category}
+                            </span>
+                            <span className="text-xs text-dim">Question #{idx + 1}</span>
+                          </div>
+
+                          <h5
+                            style={{
+                              fontSize: "1rem",
+                              fontWeight: "600",
+                              marginBottom: "10px",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            {q.question}
+                          </h5>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "12px",
+                              marginBottom: "14px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: "10px",
+                                background: "rgba(255,255,255,0.02)",
+                                borderRadius: "4px",
+                              }}
+                            >
+                              <div
+                                className="label"
+                                style={{ fontSize: "0.7rem", marginBottom: "4px" }}
+                              >
+                                Why it may be asked:
+                              </div>
+                              <p className="text-xs text-dim">{q.why_asked}</p>
+                            </div>
+
+                            <div
+                              style={{
+                                padding: "10px",
+                                background: isEvidenceGap
+                                  ? "rgba(245, 158, 11, 0.05)"
+                                  : "rgba(255,255,255,0.02)",
+                                borderRadius: "4px",
+                                border: isEvidenceGap
+                                  ? "1px solid rgba(245, 158, 11, 0.2)"
+                                  : "none",
+                              }}
+                            >
+                              <div
+                                className="label"
+                                style={{ fontSize: "0.7rem", marginBottom: "4px" }}
+                              >
+                                Relevant Evidence Backing:
+                              </div>
+                              <p
+                                className="text-xs"
+                                style={{ color: isEvidenceGap ? "#fbbf24" : "var(--text-muted)" }}
+                              >
+                                {q.relevant_evidence}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div style={{ marginBottom: "12px" }}>
+                            <div
+                              className="label"
+                              style={{ fontSize: "0.7rem", marginBottom: "4px" }}
+                            >
+                              Preparation Advice & Strategy:
+                            </div>
+                            <p className="text-xs text-muted" style={{ lineHeight: "1.5" }}>
+                              {q.prep_notes}
+                            </p>
+                          </div>
+
+                          {/* Candidate Practice Box */}
+                          <div style={{ marginTop: "10px" }}>
+                            <label
+                              className="label"
+                              style={{ fontSize: "0.7rem", marginBottom: "4px" }}
+                            >
+                              Your Practice Talking Points / Answer:
+                            </label>
+                            <textarea
+                              className="input"
+                              rows={2}
+                              placeholder="Jot down your key STAR bullet points or talking points for this question..."
+                              value={practiceNotes[q.id] || ""}
+                              onChange={(e) =>
+                                setPracticeNotes({ ...practiceNotes, [q.id]: e.target.value })
+                              }
+                              style={{ fontSize: "0.85rem", width: "100%", resize: "vertical" }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Questions to Ask Interviewers */}
+              {prepJson.questions_to_ask && prepJson.questions_to_ask.length > 0 && (
+                <div className="card">
+                  <h4 className="title-sm" style={{ marginBottom: "8px" }}>
+                    Strategic Questions to Ask Interviewers
+                  </h4>
+                  <p className="text-xs text-muted" style={{ marginBottom: "14px" }}>
+                    High-signal questions demonstrating depth in system design, operational
+                    ownership, and roadmap execution:
+                  </p>
+                  <ul
+                    style={{
+                      paddingLeft: "20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    {prepJson.questions_to_ask.map((item: string, i: number) => (
+                      <li key={i} className="text-sm text-dim">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Preparation Checklist */}
+              {prepJson.preparation_checklist && prepJson.preparation_checklist.length > 0 && (
+                <div className="card">
+                  <h4 className="title-sm" style={{ marginBottom: "8px" }}>
+                    Pre-Interview Checklist Grounded in Capsule
+                  </h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {prepJson.preparation_checklist.map((item: string, i: number) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "8px 12px",
+                          background: "var(--bg-subtle)",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        <span style={{ color: "var(--primary)" }}>✓</span>
+                        <span className="text-xs text-dim">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
 
-      {/* Tab 6: Follow-up Reminders */}
+      {/* Tab 6: Follow-up Reminders & Timeline Tracker */}
       {activeTab === "followups" && (
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="title-md">Follow-up Timeline & Reminders</h3>
-              <p className="text-xs text-muted">Track recruiter check-ins and thank-you notes</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          {/* Schedule New Follow-up Form */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <h3 className="title-md">Schedule Follow-up Action</h3>
+                <p className="text-xs text-muted">
+                  Keep track of thank-you emails, recruiter check-ins, and timeline commitments
+                  (reminders only; no automated emails sent)
+                </p>
+              </div>
+              <span className="badge badge-amber">Action Item</span>
             </div>
+
+            <form
+              onSubmit={handleCreateFollowUp}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 2fr auto",
+                gap: "12px",
+                alignItems: "flex-end",
+              }}
+            >
+              <div className="input-group">
+                <label className="label" style={{ fontSize: "0.75rem" }}>
+                  Follow-up Type
+                </label>
+                <select
+                  className="input"
+                  value={followUpType}
+                  onChange={(e) => setFollowUpType(e.target.value)}
+                  style={{ padding: "8px 10px", fontSize: "0.85rem" }}
+                >
+                  <option value="interview_follow_up">Interview Follow-up</option>
+                  <option value="recruiter_follow_up">Recruiter Check-in</option>
+                  <option value="application_follow_up">Application Status Inquiry</option>
+                  <option value="custom">Custom Follow-up</option>
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label className="label" style={{ fontSize: "0.75rem" }}>
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  className="input"
+                  value={followUpDate}
+                  onChange={(e) => setFollowUpDate(e.target.value)}
+                  style={{ padding: "8px 10px", fontSize: "0.85rem" }}
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="label" style={{ fontSize: "0.75rem" }}>
+                  Notes / Context
+                </label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g. Send thank-you note referencing the Raft consensus discussion..."
+                  value={followUpNotes}
+                  onChange={(e) => setFollowUpNotes(e.target.value)}
+                  style={{ padding: "8px 10px", fontSize: "0.85rem" }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingFollowUp}
+                className="btn btn-primary"
+                style={{ height: "38px" }}
+              >
+                {submittingFollowUp ? "Scheduling..." : "+ Schedule"}
+              </button>
+            </form>
           </div>
 
-          {follow_ups.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 0" }} className="text-sm text-muted">
-              No follow-up reminders scheduled.
+          {/* Follow-up List */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <h3 className="title-md">Scheduled Follow-ups</h3>
+                <p className="text-xs text-muted">
+                  Historical and upcoming touchpoints for {application.target_company}
+                </p>
+              </div>
+              <span className="badge badge-blue">{follow_ups.length} Registered</span>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {follow_ups.map((f, i) => (
-                <div
-                  key={f.id || i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "12px 16px",
-                    background: "var(--bg-subtle)",
-                    border: "1px solid var(--border-color)",
-                    borderRadius: "var(--radius-sm)",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: "600", fontSize: "0.9rem" }}>{f.type}</div>
-                    <div className="text-xs text-muted">
-                      Due: {new Date(f.due_at).toLocaleDateString()} {f.notes ? `• ${f.notes}` : ""}
+
+            {follow_ups.length === 0 ? (
+              <div
+                style={{ textAlign: "center", padding: "40px 0" }}
+                className="text-sm text-muted"
+              >
+                No follow-up reminders scheduled yet. Schedule one above!
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {follow_ups.map((f: FollowUp, i: number) => {
+                  const isDone = f.completed_at && f.status !== "Skipped";
+                  const isSkipped =
+                    f.status === "Skipped" || (f.notes && f.notes.includes("[SKIPPED]"));
+                  return (
+                    <div
+                      key={f.id || i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "16px",
+                        background: "var(--bg-subtle)",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "var(--radius-sm)",
+                      }}
+                    >
+                      <div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          <span
+                            className={`badge ${
+                              isDone ? "badge-green" : isSkipped ? "badge-gray" : "badge-amber"
+                            }`}
+                          >
+                            {isDone ? "Completed" : isSkipped ? "Skipped" : "Pending"}
+                          </span>
+                          <strong style={{ fontSize: "0.95rem" }}>
+                            {f.type.replace(/_/g, " ")}
+                          </strong>
+                        </div>
+
+                        <div className="text-xs text-muted">
+                          Due: {new Date(f.due_at).toLocaleDateString()}{" "}
+                          {f.completed_at
+                            ? `• ${isSkipped ? "Skipped" : "Completed"}: ${new Date(f.completed_at).toLocaleDateString()}`
+                            : ""}{" "}
+                          {f.notes ? `• ${f.notes.replace("[SKIPPED]", "").trim()}` : ""}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        {!f.completed_at ? (
+                          <>
+                            <button
+                              onClick={() => handleUpdateFollowUp(f.id, "Completed")}
+                              disabled={updatingFollowUpId === f.id}
+                              className="btn btn-outline btn-sm"
+                              style={{ color: "var(--success)", borderColor: "var(--success)" }}
+                            >
+                              ✓ Mark Complete
+                            </button>
+                            <button
+                              onClick={() => handleUpdateFollowUp(f.id, "Skipped")}
+                              disabled={updatingFollowUpId === f.id}
+                              className="btn btn-secondary btn-sm"
+                            >
+                              ⏭ Skip
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleUpdateFollowUp(f.id, "Pending")}
+                            disabled={updatingFollowUpId === f.id}
+                            className="btn btn-secondary btn-sm"
+                          >
+                            ↩ Reopen
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <span className={`badge ${f.completed_at ? "badge-green" : "badge-amber"}`}>
-                    {f.completed_at ? "Completed" : "Pending"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

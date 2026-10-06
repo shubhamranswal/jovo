@@ -257,3 +257,11 @@ class FollowUp(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         "Application",
         back_populates="follow_ups",
     )
+
+    @property
+    def status(self) -> str:
+        if self.completed_at is not None:
+            if self.notes and "[SKIPPED]" in self.notes:
+                return "Skipped"
+            return "Completed"
+        return "Pending"

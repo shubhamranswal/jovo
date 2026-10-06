@@ -205,8 +205,7 @@ def test_deterministic_deduplication(
     assert len(capsule.questions) == 1
     assert capsule.questions[0].question_text == "Years of Go experience?"
     assert (
-        capsule.questions[0].answers[0].answer_text
-        == "7+ years building high-concurrency systems."
+        capsule.questions[0].answers[0].answer_text == "7+ years building high-concurrency systems."
     )
 
 
@@ -440,8 +439,7 @@ def test_golden_application_memory_journey(
         job_id=test_job.id,
         version=1,
         content=(
-            "Dear Acme Team,\n"
-            "Excited to submit my application for Staff Infrastructure Engineer."
+            "Dear Acme Team,\nExcited to submit my application for Staff Infrastructure Engineer."
         ),
     )
     db_session.add_all([resume, tailored_resume, tailored_cover_letter])
@@ -536,8 +534,6 @@ def test_golden_application_memory_journey(
     assert any("Why Acme Cloud Technologies?" in q for q in interview_prep.behavioral_questions)
 
     # Reload capsule and verify interview record is linked
-    reloaded_capsule = ApplicationService.get_application_capsule(
-        db_session, submitted_app.id
-    )
+    reloaded_capsule = ApplicationService.get_application_capsule(db_session, submitted_app.id)
     assert len(reloaded_capsule.interviews) == 1
     assert reloaded_capsule.interviews[0].stage == "Technical Screen"

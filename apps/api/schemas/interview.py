@@ -37,18 +37,63 @@ class InterviewPrepContext(BaseModel):
     submitted_qa: list[dict[str, str]] = Field(default_factory=list)
 
 
+class InterviewReadinessResponse(BaseModel):
+    """Explainable interview readiness assessment without fake probabilities."""
+
+    category: str = Field(
+        ...,
+        description="Explainable readiness level: 'Strong', 'Needs Review', or 'Evidence Gap'",
+    )
+    explanation: str = Field(
+        ...,
+        description="Clear rationale detailing why this readiness tier was assigned",
+    )
+    signals: list[str] = Field(
+        default_factory=list,
+        description="Concrete signals assessing competency coverage, evidence support, and gaps",
+    )
+
+
+class InterviewQuestionItem(BaseModel):
+    """Structured interview question with grounding, rationale, and preparation advice."""
+
+    id: str
+    question: str
+    category: str = Field(
+        ...,
+        description="'Technical', 'Behavioral', 'Application-Specific', or 'Application-Followup'",
+    )
+    why_asked: str
+    relevant_evidence: str = Field(
+        ...,
+        description="Evidence item backing candidate, or 'Evidence not found in your profile.'",
+    )
+    prep_notes: str
+    user_answer: str | None = None
+
+
 class InterviewPrepResponse(BaseModel):
     """Interview preparation generated from the exact application memory."""
 
     application_id: UUID
     stage: str
+    role_summary: str = Field(
+        default="",
+        description="Summary of what the employer prioritizes based on the frozen JD",
+    )
+    readiness: InterviewReadinessResponse | None = None
+    structured_questions: list[InterviewQuestionItem] = Field(default_factory=list)
     technical_topics: list[str] = Field(default_factory=list)
     role_questions: list[str] = Field(default_factory=list)
     resume_questions: list[str] = Field(default_factory=list)
     behavioral_questions: list[str] = Field(default_factory=list)
+    application_specific_questions: list[str] = Field(default_factory=list)
+    application_followup_questions: list[str] = Field(default_factory=list)
+    evidence_gaps: list[str] = Field(default_factory=list)
     weak_spots: list[str] = Field(default_factory=list)
     questions_to_ask: list[str] = Field(default_factory=list)
     preparation_checklist: list[str] = Field(default_factory=list)
+    evidence_to_review: list[dict[str, Any]] = Field(default_factory=list)
     grounded_in_capsule: bool = True
     generated_at: datetime
 
@@ -62,6 +107,10 @@ class FollowUpCreate(BaseModel):
 class FollowUpUpdate(BaseModel):
     completed_at: datetime | None = None
     notes: str | None = None
+    status: str | None = Field(
+        default=None,
+        description="Target status: 'Pending', 'Completed', or 'Skipped'",
+    )
 
 
 class FollowUpResponse(BaseSchema):
@@ -71,5 +120,9 @@ class FollowUpResponse(BaseSchema):
     due_at: datetime
     completed_at: datetime | None
     notes: str | None
+    status: str = Field(
+        default="Pending",
+        description="Computed follow-up status: 'Pending', 'Completed', or 'Skipped'",
+    )
     created_at: datetime
     updated_at: datetime

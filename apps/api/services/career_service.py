@@ -29,14 +29,11 @@ class CareerService:
     @staticmethod
     def get_active_profile(db: Session) -> CareerProfile:
         """Retrieves or initializes canonical active career profile for MVP demo."""
-        query = (
-            select(CareerProfile)
-            .options(
-                joinedload(CareerProfile.experiences),
-                joinedload(CareerProfile.skills).joinedload(CareerProfileSkill.skill),
-                joinedload(CareerProfile.evidence),
-                joinedload(CareerProfile.resumes),
-            )
+        query = select(CareerProfile).options(
+            joinedload(CareerProfile.experiences),
+            joinedload(CareerProfile.skills).joinedload(CareerProfileSkill.skill),
+            joinedload(CareerProfile.evidence),
+            joinedload(CareerProfile.resumes),
         )
         profile = db.scalar(query)
         if profile:
@@ -361,9 +358,7 @@ class CareerService:
         provider = llm_provider
         if not provider:
             if settings.GEMINI_API_KEY and settings.GEMINI_API_KEY.strip():
-                provider = GeminiProvider(
-                    api_key=settings.GEMINI_API_KEY, model=settings.LLM_MODEL
-                )
+                provider = GeminiProvider(api_key=settings.GEMINI_API_KEY, model=settings.LLM_MODEL)
             else:
                 provider = FakeLLMProvider()
 

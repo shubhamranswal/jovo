@@ -11,6 +11,8 @@ from apps.api.db.models import (
     ApplicationDocument,
     ApplicationQuestion,
     ApplicationSnapshot,
+    CareerProfile,
+    CareerProfileSkill,
     Company,
     CoverLetter,
     FollowUp,
@@ -36,6 +38,8 @@ from apps.api.schemas.interview import (
     FollowUpResponse,
     FollowUpUpdate,
     InterviewPrepResponse,
+    InterviewQuestionItem,
+    InterviewReadinessResponse,
     InterviewResponse,
 )
 
@@ -458,36 +462,325 @@ class ApplicationService:
         db: Session, application_id: UUID, stage: str = "Technical"
     ) -> InterviewPrepResponse:
         """Generates grounded interview preparation derived strictly from
-        the exact Application Capsule.
+        the exact Application Capsule and verified career evidence.
         """
         capsule = ApplicationService.get_application_capsule(db, application_id)
         app_summary = capsule.application
 
-        # Extract JD text
+        # Extract JD text and snapshot metadata
         jd_text = capsule.latest_snapshot.job_description if capsule.latest_snapshot else ""
+        meta = capsule.latest_snapshot.extraction_metadata_json if capsule.latest_snapshot else {}
         company = app_summary.company_name or "Target Company"
         role = app_summary.title
 
-        # Extract submitted materials
-        submitted_resume = next(
-            (d.content for d in capsule.documents if d.document_type == "resume" and d.content),
-            None,
-        )
-        submitted_cover = next(
-            (
-                d.content
-                for d in capsule.documents
-                if d.document_type == "cover_letter" and d.content
-            ),
-            None,
-        )
+        jd_skills = meta.get("skills", []) if isinstance(meta, dict) else []
+        if not jd_skills:
+            common_keywords = [
+                "Go",
+                "Python",
+                "TypeScript",
+                "React",
+                "Node.js",
+                "Kubernetes",
+                "Docker",
+                "AWS",
+                "GCP",
+                "Distributed Systems",
+                "SQL",
+                "PostgreSQL",
+                "Raft",
+                "Redis",
+                "Microservices",
+                "System Design",
+                "CI/CD",
+                "Security",
+                "REST",
+                "gRPC",
+            ]
+            jd_skills = [k for k in common_keywords if k.lower() in jd_text.lower()]
 
+        # Extract exact submitted materials
+        resume_doc = next(
+            (d for d in capsule.documents if d.document_type == "resume"),
+            None,
+        )
+        submitted_resume = resume_doc.content if resume_doc else None
+        resume_label = resume_doc.version_label if resume_doc else "Master Resume"
+
+        cover_doc = next(
+            (d for d in capsule.documents if d.document_type == "cover_letter"),
+            None,
+        )
+        submitted_cover = cover_doc.content if cover_doc else None
+        cover_label = cover_doc.version_label if cover_doc else "Standard Cover Letter"
+
+        # Extract candidate verified profile and evidence
+        profile = db.scalar(
+            select(CareerProfile)
+            .where(CareerProfile.user_id == app_summary.user_id)
+            .options(
+                joinedload(CareerProfile.skills).joinedload(CareerProfileSkill.skill),
+                joinedload(CareerProfile.experiences),
+                joinedload(CareerProfile.evidence),
+            )
+        )
+        verified_skills = [
+            cps.skill.normalized_name for cps in (profile.skills if profile else []) if cps.skill
+        ]
+        verified_skills_lower = {s.lower() for s in verified_skills}
+        verified_evidence = profile.evidence if profile else []
+        verified_experiences = profile.experiences if profile else []
+
+        # Analyze competency coverage and detect evidence gaps (anti-hallucination)
+        matched_competencies = []
+        evidence_gaps = []
+        evidence_mapping: dict[str, str] = {}
+
+        for comp in jd_skills:
+            comp_lower = comp.lower()
+            found_skill = comp_lower in verified_skills_lower
+            ev_match = next(
+                (
+                    ev
+                    for ev in verified_evidence
+                    if comp_lower in ev.title.lower() or comp_lower in ev.content.lower()
+                ),
+                None,
+            )
+            exp_match = next(
+                (
+                    exp
+                    for exp in verified_experiences
+                    if comp_lower in (exp.description or "").lower()
+                    or comp_lower in exp.title.lower()
+                ),
+                None,
+            )
+            resume_match = submitted_resume and comp_lower in submitted_resume.lower()
+
+            if found_skill or ev_match or exp_match or resume_match:
+                matched_competencies.append(comp)
+                if ev_match:
+                    evidence_mapping[comp] = (
+                        f"Verified evidence: '{ev_match.title}' ({ev_match.source_type})"
+                    )
+                elif exp_match:
+                    evidence_mapping[comp] = (
+                        f"Documented experience: '{exp_match.title}' at {exp_match.organization}"
+                    )
+                elif found_skill:
+                    evidence_mapping[comp] = f"Profile documented skill: {comp}"
+                else:
+                    evidence_mapping[comp] = (
+                        f"Referenced in submitted tailored resume ({resume_label})"
+                    )
+            else:
+                evidence_gaps.append(f"{comp}: Evidence not found in your profile.")
+
+        # Candidate-approved Q&A extraction
         qa_context = []
         for q in capsule.questions:
             for ans in q.answers:
-                qa_context.append(f"Q: {q.question_text} | A: {ans.answer_text}")
+                if ans.user_approved:
+                    qa_context.append(
+                        {
+                            "question": q.question_text,
+                            "answer": ans.answer_text,
+                            "source": ans.source,
+                        }
+                    )
 
-        # Assemble grounded interview topics
+        # Calculate explainable readiness assessment
+        signals = [
+            f"Competency Coverage: {len(matched_competencies)} of {max(1, len(jd_skills))} "
+            f"requirements backed by candidate evidence/resume",
+            (
+                f"Preserved Materials: Tailored resume ({resume_label}) "
+                f"and cover letter ({cover_label})"
+            ),
+            f"Application Answers: {len(qa_context)} candidate-approved form answers recorded",
+        ]
+        if evidence_gaps:
+            signals.append(
+                f"Identified Gaps: {len(evidence_gaps)} requirements lack verified profile evidence"
+            )
+
+        if not evidence_gaps and len(matched_competencies) > 0:
+            readiness_cat = "Strong"
+            readiness_explanation = (
+                f"Candidate profile and submitted materials provide verified evidence "
+                f"for all primary competencies stated in the frozen job description "
+                f"for {role} at {company}."
+            )
+        elif len(evidence_gaps) > 0:
+            readiness_cat = "Evidence Gap"
+            gap_names = [g.split(":")[0] for g in evidence_gaps[:3]]
+            readiness_explanation = (
+                f"Candidate profile lacks verified evidence for {len(evidence_gaps)} stated "
+                f"requirements ({', '.join(gap_names)}). "
+                f"Interviewers are likely to probe these competencies."
+            )
+        else:
+            readiness_cat = "Needs Review"
+            readiness_explanation = (
+                f"Application materials recorded for {role}, but additional verified evidence "
+                f"is recommended to substantiate alignment with {company}'s requirements."
+            )
+
+        readiness = InterviewReadinessResponse(
+            category=readiness_cat,
+            explanation=readiness_explanation,
+            signals=signals,
+        )
+
+        # Assemble grounded structured questions
+        structured_questions: list[InterviewQuestionItem] = []
+
+        # 1. Technical Questions (derived from JD requirements)
+        for comp in jd_skills[:4]:
+            if comp in matched_competencies:
+                structured_questions.append(
+                    InterviewQuestionItem(
+                        id=f"tech-{len(structured_questions) + 1}",
+                        question=(
+                            f"Explain how you design and implement resilient systems using {comp}."
+                        ),
+                        category="Technical",
+                        why_asked=(
+                            f"Core competency in frozen job description for {role} at {company}."
+                        ),
+                        relevant_evidence=evidence_mapping.get(comp, f"Verified skill: {comp}"),
+                        prep_notes=(
+                            "Discuss production architecture, concurrency constraints, "
+                            f"and trade-offs when applying {comp}."
+                        ),
+                    )
+                )
+            else:
+                structured_questions.append(
+                    InterviewQuestionItem(
+                        id=f"tech-{len(structured_questions) + 1}",
+                        question=(
+                            f"How would you approach ramping up on {comp} "
+                            f"in {company}'s production environment?"
+                        ),
+                        category="Technical",
+                        why_asked=(
+                            "Requirement identified in job description "
+                            "where profile lacks evidence."
+                        ),
+                        relevant_evidence="Evidence not found in your profile.",
+                        prep_notes=(
+                            "Highlight fundamental architectural principles and learning agility."
+                        ),
+                    )
+                )
+
+        # 2. Behavioral Questions (derived from background and role responsibilities)
+        structured_questions.append(
+            InterviewQuestionItem(
+                id=f"beh-{len(structured_questions) + 1}",
+                question=f"Why did you choose to apply to {company} as a {role}?",
+                category="Behavioral",
+                why_asked=f"Assesses candidate motivation and company alignment with {company}.",
+                relevant_evidence=(
+                    f"Cover letter statement: '{submitted_cover[:120]}...'"
+                    if submitted_cover
+                    else "Career profile headline and summary alignment."
+                ),
+                prep_notes="Frame answer around product impact, challenges, and culture.",
+            )
+        )
+        first_exp = verified_experiences[0] if verified_experiences else None
+        exp_ref = (
+            f"Verified experience: {first_exp.title} at {first_exp.organization}"
+            if first_exp
+            else "Documented career experience."
+        )
+        structured_questions.append(
+            InterviewQuestionItem(
+                id=f"beh-{len(structured_questions) + 1}",
+                question=(
+                    "Tell me about a high-severity production incident you resolved under pressure."
+                ),
+                category="Behavioral",
+                why_asked=(
+                    f"Assesses operational maturity and incident management required for {role}."
+                ),
+                relevant_evidence=exp_ref,
+                prep_notes=(
+                    "Use STAR method: Situation, Task, Action (triage/root-cause fix), Result."
+                ),
+            )
+        )
+
+        # 3. Application-Specific Questions (grounded ONLY in submitted resume claims)
+        app_claims = []
+        if submitted_resume:
+            for line in submitted_resume.split("\n"):
+                clean = line.strip()
+                if clean and len(clean) > 25 and not clean.startswith("#"):
+                    app_claims.append(clean)
+                    if len(app_claims) >= 2:
+                        break
+        if not app_claims and verified_evidence:
+            app_claims.append(verified_evidence[0].content[:120])
+
+        for idx, claim in enumerate(app_claims):
+            structured_questions.append(
+                InterviewQuestionItem(
+                    id=f"app-{idx + 1}",
+                    question=(
+                        f'Your application highlights: "{claim[:90]}". '
+                        "Explain: architecture, trade-offs, and measurable outcome."
+                    ),
+                    category="Application-Specific",
+                    why_asked="Interviewer probing specific claims cited in submitted resume.",
+                    relevant_evidence=(
+                        f"Extracted from submitted tailored resume version ({resume_label})."
+                    ),
+                    prep_notes=(
+                        "Be ready with technical depth: architecture, "
+                        "latency metrics, and failure modes."
+                    ),
+                )
+            )
+
+        # 4. Application-Followup Questions (derived from approved application Q&A)
+        app_followup_strings = []
+        for item in qa_context:
+            structured_questions.append(
+                InterviewQuestionItem(
+                    id=f"qa-{len(structured_questions) + 1}",
+                    question=(
+                        f'In your application, you submitted: "{item["answer"][:70]}". '
+                        "How did you handle the associated risks, edge cases, or trade-offs?"
+                    ),
+                    category="Application-Followup",
+                    why_asked=(
+                        f"Probing follow-up on approved application question: '{item['question']}'"
+                    ),
+                    relevant_evidence=(
+                        f"Recorded application answer ({item.get('source', 'Application Form')})."
+                    ),
+                    prep_notes=(
+                        "Elaborate with tactical context beyond the initial application text field."
+                    ),
+                )
+            )
+            app_followup_strings.append(
+                f"Follow-up on '{item['question']}': "
+                f"How did you mitigate risks when '{item['answer'][:40]}'?"
+            )
+
+        # Role summary
+        role_summary = (
+            f"Based on the frozen job description, {company} prioritizes "
+            f"{', '.join(jd_skills[:3]) if jd_skills else 'high-performance systems'} "
+            f"for the {role} role. Candidates are evaluated on distributed architecture, "
+            f"operational reliability, and proven production execution."
+        )
+
         tech_topics = [
             f"Core system design and architecture relevant to {role}",
             "API design, concurrency, and distributed data consistency",
@@ -497,45 +790,45 @@ class ApplicationService:
             f"How would you approach scaling key services at {company}?",
             f"What trade-offs have you made when architecting solutions for {role} roles?",
         ]
-        resume_questions = (
-            [
-                "Walk through technical challenges in your most impactful project.",
-                "Explain the metrics and architectural decisions cited in your tailored resume.",
-            ]
-            if submitted_resume
-            else ["Walk through your most significant engineering accomplishments."]
-        )
+        resume_questions = [
+            q.question for q in structured_questions if q.category == "Application-Specific"
+        ]
         behavioral_questions = [
             f"Why did you choose to apply to {company}?",
             "Tell me about a time you resolved a major production outage under pressure.",
         ]
         if qa_context:
             behavioral_questions.append(
-                f"Elaborate on your application answer: '{capsule.questions[0].question_text}'"
+                f"Elaborate on your application answer: '{qa_context[0]['question']}'"
             )
 
-        weak_spots = [
-            "Be prepared to address specific niche tooling in JD not detailed in resume.",
-            "Expect deep-dive inquiries on operational ownership and incident management.",
-        ]
         questions_to_ask = [
             f"What does the engineering roadmap look like for {company} over the next 12 months?",
-            "How does the team balance new feature velocity with technical debt management?",
+            "How does the team balance new feature velocity with technical debt and reliability?",
+            f"What are the biggest architectural bottlenecks facing the {role} team today?",
         ]
-        doc_label = capsule.documents[0].version_label if capsule.documents else "Default"
         prep_checklist = [
-            f"Review exact submitted resume version: {doc_label}",
+            f"Review exact submitted resume version: {resume_label}",
             f"Review exact job description snapshot for {role} at {company}",
-            "Prepare 3 STAR-format behavioral anecdotes aligned with stated company values",
-            "Prepare questions for the interviewer",
+            "Prepare STAR-format behavioral anecdotes aligned with stated company values",
+            "Review answers submitted on application form for potential interviewer follow-ups",
+            "Prepare responses addressing flagged profile evidence gaps",
         ]
 
         prep_data = {
+            "role_summary": role_summary,
+            "readiness": readiness.model_dump(),
+            "structured_questions": [q.model_dump() for q in structured_questions],
             "technical_topics": tech_topics,
             "role_questions": role_questions,
             "resume_questions": resume_questions,
             "behavioral_questions": behavioral_questions,
-            "weak_spots": weak_spots,
+            "application_specific_questions": resume_questions,
+            "application_followup_questions": app_followup_strings,
+            "evidence_gaps": evidence_gaps,
+            "weak_spots": evidence_gaps
+            if evidence_gaps
+            else ["Review operational ownership and incident management."],
             "questions_to_ask": questions_to_ask,
             "preparation_checklist": prep_checklist,
             "submitted_qa_count": len(qa_context),
@@ -557,11 +850,19 @@ class ApplicationService:
         return InterviewPrepResponse(
             application_id=application_id,
             stage=stage,
+            role_summary=role_summary,
+            readiness=readiness,
+            structured_questions=structured_questions,
             technical_topics=tech_topics,
             role_questions=role_questions,
             resume_questions=resume_questions,
             behavioral_questions=behavioral_questions,
-            weak_spots=weak_spots,
+            application_specific_questions=resume_questions,
+            application_followup_questions=app_followup_strings,
+            evidence_gaps=evidence_gaps,
+            weak_spots=evidence_gaps
+            if evidence_gaps
+            else ["Review operational ownership and incident management."],
             questions_to_ask=questions_to_ask,
             preparation_checklist=prep_checklist,
             grounded_in_capsule=True,
@@ -606,10 +907,27 @@ class ApplicationService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Follow-up {follow_up_id} not found",
             )
-        if payload.completed_at is not None:
+        now = datetime.now(UTC)
+        if payload.status:
+            if payload.status == "Completed":
+                fu.completed_at = payload.completed_at or now
+                if fu.notes and "[SKIPPED]" in fu.notes:
+                    fu.notes = fu.notes.replace("[SKIPPED]", "").strip()
+            elif payload.status == "Skipped":
+                fu.completed_at = payload.completed_at or now
+                curr_note = fu.notes or ""
+                if "[SKIPPED]" not in curr_note:
+                    fu.notes = f"[SKIPPED] {curr_note}".strip()
+            elif payload.status == "Pending":
+                fu.completed_at = None
+                if fu.notes and "[SKIPPED]" in fu.notes:
+                    fu.notes = fu.notes.replace("[SKIPPED]", "").strip()
+        elif payload.completed_at is not None:
             fu.completed_at = payload.completed_at
+
         if payload.notes is not None:
             fu.notes = payload.notes
+
         db.commit()
         db.refresh(fu)
         return FollowUpResponse.model_validate(fu)

@@ -317,6 +317,22 @@ export interface Interview {
   updated_at: string;
 }
 
+export interface InterviewQuestionItem {
+  id: string;
+  question: string;
+  category: "Technical" | "Behavioral" | "Application-Specific" | "Application-Followup";
+  why_asked: string;
+  relevant_evidence: string;
+  prep_notes: string;
+  user_answer?: string | null;
+}
+
+export interface InterviewReadiness {
+  category: "Strong" | "Needs Review" | "Evidence Gap";
+  explanation: string;
+  signals: string[];
+}
+
 export interface FollowUp {
   id: string;
   application_id: string;
@@ -324,6 +340,7 @@ export interface FollowUp {
   due_at: string;
   completed_at?: string | null;
   notes?: string | null;
+  status?: "Pending" | "Completed" | "Skipped";
   created_at: string;
   updated_at: string;
 }
