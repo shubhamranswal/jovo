@@ -1,8 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "JobOS Application Assistant",
+  "name": "Jovo Extension",
   "version": "0.1.0",
-  "description": "Apply anywhere. Forget nothing. Application memory and evidence-grounded autofill.",
+  "description": "AI-assisted job applications with application memory. Apply smarter. Get hired faster.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": ["activeTab", "storage", "tabs"],
   "host_permissions": [
     "http://localhost:8000/*",
@@ -23,6 +29,12 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "JobOS Assistant"
+    "default_title": "Jovo Extension",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   }
 }

@@ -26,6 +26,21 @@ async function build() {
     path.resolve(outdir, "popup.css")
   );
 
+  // Copy icons
+  const iconsSrcDir = path.resolve(__dirname, "icons");
+  const iconsDestDir = path.resolve(outdir, "icons");
+  if (fs.existsSync(iconsSrcDir)) {
+    if (!fs.existsSync(iconsDestDir)) {
+      fs.mkdirSync(iconsDestDir, { recursive: true });
+    }
+    for (const iconFile of fs.readdirSync(iconsSrcDir)) {
+      fs.copyFileSync(
+        path.join(iconsSrcDir, iconFile),
+        path.join(iconsDestDir, iconFile)
+      );
+    }
+  }
+
   // Bundle background, content, popup scripts
   await esbuild.build({
     entryPoints: {
@@ -41,7 +56,7 @@ async function build() {
     logLevel: "info",
   });
 
-  console.log("JobOS Extension build completed successfully.");
+  console.log("Jovo Extension build completed successfully.");
 }
 
 build().catch((err) => {

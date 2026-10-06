@@ -1,6 +1,6 @@
-# JobOS Versioned Prompts
+# Jovo Versioned Prompts
 
-This package contains versioned prompts for all LLM-driven intelligence components in JobOS.
+This package contains versioned prompts for all LLM-driven intelligence components in Jovo.
 
 ## Prompt Directories
 

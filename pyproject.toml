@@ -1,8 +1,8 @@
 [project]
 name = "jobos"
 version = "0.1.0"
-description = "JobOS - Apply anywhere. Forget nothing."
-readme = "PRODUCT_SPEC.md"
+description = "Jovo - Apply smarter. Get hired faster."
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",

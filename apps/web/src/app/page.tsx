@@ -47,11 +47,25 @@ export default function HomePage() {
     <div className="container" style={{ paddingTop: "40px" }}>
       {/* Hero Header */}
       <div style={{ marginBottom: "36px" }}>
-        <div style={{ display: "inline-block", marginBottom: "12px" }}>
-          <span className="badge badge-blue">JobOS Career Operating System</span>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "12px",
+          }}
+        >
+          <img
+            src="/jovo-logo-32.png"
+            alt="Jovo"
+            width={22}
+            height={22}
+            style={{ borderRadius: "5px" }}
+          />
+          <span className="badge badge-blue">Jovo Career Operating System</span>
         </div>
-        <h1 className="title-xl" style={{ fontSize: "2.4rem", marginBottom: "10px" }}>
-          Apply anywhere. Forget nothing.
+        <h1 className="title-xl" style={{ fontSize: "2.6rem", marginBottom: "10px" }}>
+          Apply smarter. Get hired faster.
         </h1>
         <p className="text-muted" style={{ maxWidth: "680px", fontSize: "1.05rem" }}>
           Discover real jobs with SerpApi, calculate explainable evidence-grounded matches, tailor
@@ -154,6 +168,73 @@ export default function HomePage() {
           <div style={{ fontSize: "1.8rem", fontWeight: "700", marginTop: "4px" }}>Verified</div>
           <div className="text-xs text-dim" style={{ marginTop: "4px" }}>
             Grounding candidate claims
+          </div>
+        </div>
+      </div>
+
+      {/* Jovo Suite - Product Surfaces */}
+      <div style={{ marginBottom: "36px" }}>
+        <h2 className="title-md" style={{ marginBottom: "16px" }}>
+          Jovo Product Surfaces
+        </h2>
+        <div className="grid-3" style={{ gap: "14px" }}>
+          <div className="card" style={{ padding: "18px" }}>
+            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
+              Jovo Search
+            </div>
+            <div className="text-sm text-muted">
+              Discover verified live opportunities powered by SerpApi Google Jobs.
+            </div>
+          </div>
+          <div className="card" style={{ padding: "18px" }}>
+            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
+              Jovo Apply
+            </div>
+            <div className="text-sm text-muted">
+              AI-assisted applications with evidence-grounded tailoring and safe autofill.
+            </div>
+          </div>
+          <div className="card" style={{ padding: "18px" }}>
+            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
+              Jovo Track
+            </div>
+            <div className="text-sm text-muted">
+              Application Capsule preserving exact JD, resume, cover letter & approved Q&A.
+            </div>
+          </div>
+          <div className="card" style={{ padding: "18px" }}>
+            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
+              Jovo Follow-up
+            </div>
+            <div className="text-sm text-muted">
+              Actionable reminders, lifecycle tracking, and post-submission interview steps.
+            </div>
+          </div>
+          <div className="card" style={{ padding: "18px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "4px",
+              }}
+            >
+              <span style={{ fontWeight: "700", color: "var(--accent-blue)" }}>Jovo Copilot</span>
+              <span className="badge badge-amber" style={{ fontSize: "0.65rem" }}>
+                Roadmap
+              </span>
+            </div>
+            <div className="text-sm text-muted">
+              Planned conversational career AI assistant for deep strategy and interactive coaching.
+            </div>
+          </div>
+          <div className="card" style={{ padding: "18px" }}>
+            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
+              Jovo Extension
+            </div>
+            <div className="text-sm text-muted">
+              Chrome MV3 extension for Workday and generic ATS application assistance.
+            </div>
           </div>
         </div>
       </div>

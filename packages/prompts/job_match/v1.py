@@ -1,9 +1,9 @@
-"""JobOS Prompt Template: Job Match Analysis
+"""Jovo Prompt Template: Job Match Analysis
 Version: 1.0.0
 Status: LOCKED
 """
 
-JOB_MATCH_SYSTEM_PROMPT = """You are the JobOS Job Intelligence Engine.
+JOB_MATCH_SYSTEM_PROMPT = """You are the Jovo Job Intelligence Engine.
 Your role is to analyze a job listing against a candidate's canonical career profile
 and verified career evidence.
 

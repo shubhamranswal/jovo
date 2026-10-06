@@ -45,6 +45,17 @@ body {
   align-items: center;
 }
 
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-logo {
+  border-radius: 4px;
+  display: block;
+}
+
 .brand-title {
   font-size: 18px;
   font-weight: 800;

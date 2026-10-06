@@ -5,9 +5,11 @@ from apps.api.core.config import settings
 from apps.api.routers import applications, career, health, jobs, resumes
 
 app = FastAPI(
-    title="JobOS API",
+    title="Jovo API",
     version="0.1.0",
-    description="Job-search operating system API. Apply anywhere. Forget nothing.",
+    description=(
+        "AI-assisted job applications with application memory. Apply smarter. Get hired faster."
+    ),
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -34,8 +36,8 @@ app.include_router(api_v1_router)
 @app.get("/")
 def root():
     return {
-        "name": "JobOS API",
-        "tagline": "Apply anywhere. Forget nothing.",
+        "name": "Jovo API",
+        "tagline": "Apply smarter. Get hired faster.",
         "version": "0.1.0",
         "docs": "/docs",
     }

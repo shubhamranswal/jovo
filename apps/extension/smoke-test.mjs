@@ -5,7 +5,7 @@
  * 1. Extension loads successfully from dist/.
  * 2. Job/ATS is detected (Workday adapter).
  * 3. Company and role are extracted accurately.
- * 4. JobOS job identification matches target job via backend API.
+ * 4. Jovo job identification matches target job via backend API.
  * 5. Match score and component details are displayed.
  * 6. Safe profile fields are autofilled without touching sensitive inputs.
  * 7. Free-text application question is detected (with security exclusions for password/csrf).
@@ -30,7 +30,7 @@ import { isElementSensitive, isGenuineApplicationQuestion } from "./src/content/
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log("=== JobOS Chrome Extension Smoke Test & Flow Verification ===\n");
+console.log("=== Jovo Chrome Extension Smoke Test & Flow Verification ===\n");
 
 // STEP 1: Verify dist/ unpacked directory completeness
 let distDir = path.resolve(__dirname, "dist");
@@ -47,9 +47,14 @@ assert.ok(fs.existsSync(path.join(distDir, "content.js")), "dist/content.js cont
 assert.ok(fs.existsSync(path.join(distDir, "popup.html")), "dist/popup.html action popup must exist");
 assert.ok(fs.existsSync(path.join(distDir, "popup.js")), "dist/popup.js popup script must exist");
 assert.ok(fs.existsSync(path.join(distDir, "popup.css")), "dist/popup.css popup stylesheet must exist");
+assert.ok(fs.existsSync(path.join(distDir, "icons/icon-16.png")), "dist/icons/icon-16.png must exist");
+assert.ok(fs.existsSync(path.join(distDir, "icons/icon-32.png")), "dist/icons/icon-32.png must exist");
+assert.ok(fs.existsSync(path.join(distDir, "icons/icon-48.png")), "dist/icons/icon-48.png must exist");
+assert.ok(fs.existsSync(path.join(distDir, "icons/icon-128.png")), "dist/icons/icon-128.png must exist");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(distDir, "manifest.json"), "utf-8"));
 assert.strictEqual(manifest.manifest_version, 3, "Must be Manifest V3");
+assert.strictEqual(manifest.name, "Jovo Extension", "Manifest name must be Jovo Extension");
 assert.strictEqual(manifest.action.default_popup, "popup.html", "Action popup must point to popup.html");
 assert.strictEqual(manifest.background.service_worker, "background.js", "Background worker must point to background.js");
 console.log("1. ✓ Extension loads successfully from unpacked dist/ (MV3 bundle verified)");
@@ -80,7 +85,7 @@ assert.strictEqual(extractedJob.externalId, "REQ-84920");
 assert.strictEqual(extractedJob.isWorkday, true);
 console.log(`3. ✓ Company and role extracted: '${extractedJob.company}' - '${extractedJob.title}'`);
 
-// STEP 4 & 5: Mock JobOS API Identification & Match Retrieval
+// STEP 4 & 5: Mock Jovo API Identification & Match Retrieval
 const mockJobOsJob = {
   id: "00000000-0000-0000-0000-000000000001",
   title: "Senior Platform Engineer",
@@ -95,9 +100,9 @@ const mockMatch = {
   gaps_json: [],
 };
 
-assert.strictEqual(mockJobOsJob.title, extractedJob.title, "JobOS job title matched");
+assert.strictEqual(mockJobOsJob.title, extractedJob.title, "Jovo job title matched");
 assert.strictEqual(mockMatch.overall_score, 92, "Match calculation score valid");
-console.log("4. ✓ JobOS job identification works");
+console.log("4. ✓ Jovo job identification works");
 console.log(`5. ✓ Match information displayed: ${mockMatch.overall_score}% (${mockMatch.strengths_json.length} verified strengths)`);
 
 // STEP 6: Safe Profile Fields Autofill & Security Guardrails

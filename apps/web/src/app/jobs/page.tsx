@@ -107,7 +107,7 @@ function JobSearchContent() {
           Discover & Inspect Opportunities
         </h1>
         <p className="text-muted text-sm">
-          Search the local JobOS catalog or explicitly query Google Jobs via SerpApi.
+          Search the local Jovo catalog or explicitly query Google Jobs via SerpApi.
         </p>
       </div>
 
@@ -248,7 +248,7 @@ function JobSearchContent() {
           <p className="text-sm text-muted">
             {dataSource === "serpapi"
               ? "Connecting to SerpApi Google Jobs engine and normalizing results..."
-              : "Querying local JobOS catalog..."}
+              : "Querying local Jovo catalog..."}
           </p>
         </div>
       )}

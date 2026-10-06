@@ -8,7 +8,7 @@ import { assembleApplicationPayload } from "../content/capture";
 import type { ExtensionMessage } from "../types";
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("JobOS Application Assistant Extension installed.");
+  console.log("Jovo Extension installed.");
 });
 
 // Listener for background tasks or popup proxy calls

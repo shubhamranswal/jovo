@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       renderJobInfo();
-      await matchWithJobOS();
+      await matchWithJovo();
       renderFields();
       renderQuestions();
 
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       mainView.classList.remove("hidden");
     });
   } catch (err: any) {
-    showError(err.message || "Failed to initialize JobOS extension");
+    showError(err.message || "Failed to initialize Jovo extension");
   }
 
   function renderJobInfo() {
@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     jobCompany.innerText = currentJob.company || "Company";
   }
 
-  async function matchWithJobOS() {
+  async function matchWithJovo() {
     if (!currentJob || !currentProfile) return;
     try {
       const identifyRes = await jobosApi.identifyJob({
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (identifyRes.matched && identifyRes.job) {
         matchedJob = identifyRes.job;
-        jobMatchStatus.innerText = "✓ Matched to JobOS library";
+        jobMatchStatus.innerText = "✓ Matched to Jovo library";
         const match: JobMatch = await jobosApi.getJobMatch(matchedJob.id, currentProfile.id);
         matchScore.innerText = `${match.overall_score}%`;
         matchSub.innerText = `${match.strengths_json.length} Strengths Verified`;

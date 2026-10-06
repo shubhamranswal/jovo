@@ -65,9 +65,9 @@ export function assembleApplicationPayload(
     source: payload.jobId ? "serpapi" : "browser_capture",
     application_url: payload.url,
     status: appStatus,
-    notes: `Captured via JobOS Chrome Extension on ${new Date().toISOString()}`,
+    notes: `Captured via Jovo Extension on ${new Date().toISOString()}`,
     metadata_json: {
-      captured_via: "JobOS Chrome Extension",
+      captured_via: "Jovo Extension",
       captured_at: new Date().toISOString(),
       ...(appliedTimestamp ? { applied_at: appliedTimestamp } : {}),
     },

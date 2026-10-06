@@ -21,12 +21,18 @@ export function Navbar() {
       <div className="container navbar-inner">
         <div className="brand">
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div className="brand-logo">J</div>
+            <img
+              src="/jovo-logo-32.png"
+              alt="Jovo"
+              width={28}
+              height={28}
+              style={{ borderRadius: "6px" }}
+            />
             <div>
-              <span className="brand-text">JobOS</span>
+              <span className="brand-text">Jovo</span>
             </div>
           </Link>
-          <span className="brand-tag">Apply anywhere. Forget nothing.</span>
+          <span className="brand-tag">Apply smarter. Get hired faster.</span>
         </div>
 
         <div className="nav-links">

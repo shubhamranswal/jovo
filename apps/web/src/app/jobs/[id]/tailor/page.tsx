@@ -61,7 +61,7 @@ export default function TailorJobPage() {
         source: "jobos_serpapi_tailor",
         application_url: job.canonical_url || undefined,
         status: "Applied",
-        notes: "Tailored and applied via JobOS intelligent tailoring golden path.",
+        notes: "Tailored and applied via Jovo intelligent tailoring golden path.",
         initial_snapshot: {
           job_description: job.description,
           page_title: job.title,

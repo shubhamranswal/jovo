@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JobOS Assistant</title>
+  <title>Jovo Extension</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="popup-container">
     <header class="header">
       <div class="logo-row">
-        <span class="brand-title">JobOS</span>
+        <div class="brand-lockup">
+          <img src="icons/icon-32.png" alt="Jovo" class="brand-logo" width="22" height="22" />
+          <span class="brand-title">Jovo</span>
+        </div>
         <span class="badge" id="atsBadge">Detecting...</span>
       </div>
-      <p class="tagline">Apply anywhere. Forget nothing.</p>
+      <p class="tagline">Apply smarter. Get hired faster.</p>
     </header>
 
     <div id="loadingView" class="view">
@@ -27,12 +30,12 @@
         <div class="job-meta">
           <h2 id="jobTitle" class="job-title">Job Title</h2>
           <div id="jobCompany" class="job-company">Company</div>
-          <div id="jobMatchStatus" class="job-status-sub">Checking JobOS library...</div>
+          <div id="jobMatchStatus" class="job-status-sub">Checking Jovo library...</div>
         </div>
         <div id="matchSection" class="match-banner">
           <div class="match-score" id="matchScore">--%</div>
           <div class="match-summary">
-            <span class="match-label">JobOS Match</span>
+            <span class="match-label">Jovo Match</span>
             <span class="match-sub" id="matchSub">Evidence Grounded</span>
           </div>
         </div>
@@ -89,7 +92,7 @@
     </div>
 
     <footer class="footer">
-      <span id="backendStatus" class="backend-indicator">● JobOS Connected</span>
+      <span id="backendStatus" class="backend-indicator">● Jovo Connected</span>
     </footer>
   </div>
 

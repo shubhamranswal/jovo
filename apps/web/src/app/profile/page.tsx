@@ -71,8 +71,8 @@ export default function CareerProfilePage() {
             Career Profile & Verification Layer
           </h1>
           <p className="text-sm text-muted" style={{ maxWidth: "600px" }}>
-            All JobOS match scores, tailored resumes, and cover letters are strictly grounded in
-            this profile. The system never fabricates unbacked experience.
+            All Jovo match scores, tailored resumes, and cover letters are strictly grounded in this
+            profile. The system never fabricates unbacked experience.
           </p>
         </div>
 

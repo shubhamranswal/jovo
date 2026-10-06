@@ -202,7 +202,7 @@ export default function ApplicationDetailPage() {
     timelineEvents.push({
       id: "created",
       date: new Date(application.created_at),
-      title: "Application Tracked in JobOS",
+      title: "Application Tracked in Jovo",
       badge: "Initialized",
       badgeType: "blue",
       description: `Application context established targeting ${application.target_role} at ${application.target_company}.`,
@@ -645,7 +645,7 @@ export default function ApplicationDetailPage() {
             >
               {resumeDoc?.content ||
                 (resumeDoc
-                  ? `Resume Version: ${resumeDoc.version_label}\n\nPreserved immutable in JobOS Application Capsule.\nThis is the exact tailored resume submitted to ${application.target_company}.`
+                  ? `Resume Version: ${resumeDoc.version_label}\n\nPreserved immutable in Jovo Application Capsule.\nThis is the exact tailored resume submitted to ${application.target_company}.`
                   : "No resume document registered.")}
             </div>
           </div>
@@ -671,7 +671,7 @@ export default function ApplicationDetailPage() {
             >
               {coverLetterDoc?.content ||
                 (coverLetterDoc
-                  ? `Cover Letter: ${coverLetterDoc.version_label}\n\nCompany: ${application.target_company}\nPreserved immutable in JobOS Application Capsule.`
+                  ? `Cover Letter: ${coverLetterDoc.version_label}\n\nCompany: ${application.target_company}\nPreserved immutable in Jovo Application Capsule.`
                   : "No cover letter document registered.")}
             </div>
           </div>
@@ -780,7 +780,7 @@ export default function ApplicationDetailPage() {
                 className="text-sm text-muted"
                 style={{ maxWidth: "600px", margin: "0 auto 24px" }}
               >
-                JobOS will analyze your exact submitted materials, identify likely technical and
+                Jovo will analyze your exact submitted materials, identify likely technical and
                 behavioral questions, detect any profile evidence gaps, and prepare you for
                 interviewer probing on your submitted answers.
               </p>
@@ -897,7 +897,7 @@ export default function ApplicationDetailPage() {
                         ⚠️ Stated Job Requirements Lacking Verified Evidence
                       </h4>
                       <p className="text-xs text-muted">
-                        JobOS strictly avoids inventing candidate background. Be prepared to address
+                        Jovo strictly avoids inventing candidate background. Be prepared to address
                         how you ramp up or bridge these areas:
                       </p>
                     </div>
