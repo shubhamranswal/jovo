@@ -64,11 +64,18 @@ export default function JobDetailPage() {
     }
   };
 
+  const getMatchDialClass = (score: number) => {
+    if (score >= 88) return "match-dial-high";
+    if (score >= 75) return "match-dial-strong";
+    if (score >= 60) return "match-dial-moderate";
+    return "match-dial-gap";
+  };
+
   if (loading) {
     return (
       <div className="container" style={{ paddingTop: "60px", textAlign: "center" }}>
-        <h2 className="title-md">Loading Job Context & Match Engine...</h2>
-        <p className="text-sm text-muted">Retrieving grounded profile evidence...</p>
+        <h2 className="headline-md">Loading Job Context & Match Engine...</h2>
+        <p className="body-sm text-muted">Retrieving grounded profile evidence...</p>
       </div>
     );
   }
@@ -77,10 +84,10 @@ export default function JobDetailPage() {
     return (
       <div className="container" style={{ paddingTop: "60px" }}>
         <div className="card" style={{ textAlign: "center", padding: "40px" }}>
-          <h2 className="title-md" style={{ color: "var(--danger)", marginBottom: "8px" }}>
+          <h2 className="headline-md" style={{ color: "var(--fit-gap-text)", marginBottom: "8px" }}>
             Job Not Found or Error
           </h2>
-          <p className="text-sm text-muted" style={{ marginBottom: "20px" }}>
+          <p className="body-sm text-muted" style={{ marginBottom: "20px" }}>
             {error || "Could not retrieve the requested job."}
           </p>
           <Link href="/jobs" className="btn btn-secondary">
@@ -106,7 +113,7 @@ export default function JobDetailPage() {
       >
         <Link
           href="/jobs"
-          className="text-sm text-muted"
+          className="body-sm text-muted"
           style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
           ← Back to Discovery
@@ -132,7 +139,7 @@ export default function JobDetailPage() {
             <div
               style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}
             >
-              <h1 className="title-xl" style={{ fontSize: "1.8rem" }}>
+              <h1 className="headline-lg" style={{ fontSize: "1.75rem" }}>
                 {job.title}
               </h1>
               {job.remote_type && <span className="badge badge-green">{job.remote_type}</span>}
@@ -141,11 +148,16 @@ export default function JobDetailPage() {
               )}
             </div>
 
-            <div style={{ fontSize: "1.05rem", color: "var(--text-muted)", marginBottom: "12px" }}>
-              <strong style={{ color: "var(--text-main)" }}>{job.company_name || "Company"}</strong>{" "}
+            <div
+              className="body-md"
+              style={{ color: "var(--ink-secondary)", marginBottom: "12px" }}
+            >
+              <strong style={{ color: "var(--ink-primary)" }}>
+                {job.company_name || "Company"}
+              </strong>{" "}
               • {job.location || "Anywhere"}
               {job.salary_min && (
-                <span>
+                <span style={{ fontFamily: "var(--font-mono)" }}>
                   {" "}
                   • {job.currency || "$"}
                   {job.salary_min.toLocaleString()}
@@ -156,7 +168,7 @@ export default function JobDetailPage() {
 
             <div
               style={{ display: "flex", alignItems: "center", gap: "14px" }}
-              className="text-xs text-dim"
+              className="telemetry-xs text-muted"
             >
               <span>Fingerprint: {job.fingerprint.slice(0, 12)}...</span>
               {job.canonical_url && (
@@ -164,7 +176,7 @@ export default function JobDetailPage() {
                   href={job.canonical_url}
                   target="_blank"
                   rel="noreferrer"
-                  style={{ color: "var(--primary)", textDecoration: "underline" }}
+                  style={{ color: "var(--accent-action)", textDecoration: "none" }}
                 >
                   Original Source Posting ↗
                 </a>
@@ -172,32 +184,31 @@ export default function JobDetailPage() {
             </div>
           </div>
 
-          {/* Quick Match Pill */}
+          {/* Match Score Display */}
           {match && (
             <div style={{ textAlign: "right" }}>
               <div
-                style={{
-                  fontSize: "2rem",
-                  fontWeight: "800",
-                  color: match.overall_score >= 75 ? "#34d399" : "#fbbf24",
-                }}
+                className={`match-dial-pill ${getMatchDialClass(match.overall_score)}`}
+                style={{ fontSize: "1.75rem", padding: "6px 18px" }}
               >
                 {match.overall_score}%
               </div>
-              <div className="text-xs text-muted">Overall Alignment</div>
+              <div className="telemetry-xs text-muted" style={{ marginTop: "4px" }}>
+                Grounded Fit Alignment
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Two Column Layout: Match Intelligence (Left) & Full Description (Right) */}
+      {/* Two Column Layout: Job Info & Requirements (Left) & Explainable Match Inspector (Right) */}
       <div className="grid-sidebar">
         {/* Left Column: Job Description and Requirements */}
         <div>
           {/* Normalized Requirements */}
           {reqs.length > 0 && (
             <div className="card" style={{ marginBottom: "24px" }}>
-              <h3 className="title-md" style={{ marginBottom: "14px" }}>
+              <h3 className="headline-sm" style={{ marginBottom: "14px" }}>
                 Key Technical Requirements
               </h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -206,10 +217,12 @@ export default function JobDetailPage() {
                     key={idx}
                     style={{
                       padding: "4px 10px",
-                      borderRadius: "6px",
-                      background: "var(--bg-subtle)",
-                      border: "1px solid var(--border-color)",
-                      fontSize: "0.85rem",
+                      borderRadius: "var(--radius-sm)",
+                      background: "var(--bg-canvas)",
+                      border: "1px solid var(--border-hairline)",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.75rem",
+                      color: "var(--ink-secondary)",
                     }}
                   >
                     {req}
@@ -221,14 +234,14 @@ export default function JobDetailPage() {
 
           {/* Full JD */}
           <div className="card">
-            <h3 className="title-md" style={{ marginBottom: "16px" }}>
+            <h3 className="headline-sm" style={{ marginBottom: "16px" }}>
               Full Job Description
             </h3>
             <div
-              className="text-sm"
+              className="body-md"
               style={{
                 lineHeight: "1.7",
-                color: "#cbd5e1",
+                color: "var(--ink-body)",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
@@ -241,9 +254,9 @@ export default function JobDetailPage() {
         {/* Right Column: Explainable Match Engine & Grounded Evidence */}
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* Match Score Card */}
-          <div className="card" style={{ border: "1px solid #334e7a" }}>
+          <div className="card">
             <div className="card-header">
-              <h3 className="title-md">Match Intelligence</h3>
+              <h3 className="headline-sm">Match Intelligence</h3>
               <button
                 onClick={handleRecalculateMatch}
                 disabled={evaluatingMatch}
@@ -255,7 +268,7 @@ export default function JobDetailPage() {
 
             {match ? (
               <div>
-                <p className="text-sm text-muted" style={{ marginBottom: "16px" }}>
+                <p className="body-sm text-muted" style={{ marginBottom: "16px" }}>
                   {match.explanation}
                 </p>
 
@@ -266,49 +279,64 @@ export default function JobDetailPage() {
                     flexDirection: "column",
                     gap: "10px",
                     marginBottom: "20px",
+                    padding: "12px",
+                    background: "var(--bg-canvas)",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--border-hairline)",
                   }}
                 >
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
-                    className="text-sm"
+                    className="body-sm"
                   >
                     <span>Skills Alignment</span>
-                    <strong>{match.component_scores_json.skills ?? 0}%</strong>
+                    <strong style={{ fontFamily: "var(--font-mono)" }}>
+                      {match.component_scores_json.skills ?? 0}%
+                    </strong>
                   </div>
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
-                    className="text-sm"
+                    className="body-sm"
                   >
                     <span>Experience Depth</span>
-                    <strong>{match.component_scores_json.experience ?? 0}%</strong>
+                    <strong style={{ fontFamily: "var(--font-mono)" }}>
+                      {match.component_scores_json.experience ?? 0}%
+                    </strong>
                   </div>
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
-                    className="text-sm"
+                    className="body-sm"
                   >
                     <span>Location / Remote Fit</span>
-                    <strong>{match.component_scores_json.location ?? 0}%</strong>
+                    <strong style={{ fontFamily: "var(--font-mono)" }}>
+                      {match.component_scores_json.location ?? 0}%
+                    </strong>
                   </div>
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
-                    className="text-sm"
+                    className="body-sm"
                   >
                     <span>Salary Fit</span>
-                    <strong>{match.component_scores_json.salary ?? 0}%</strong>
+                    <strong style={{ fontFamily: "var(--font-mono)" }}>
+                      {match.component_scores_json.salary ?? 0}%
+                    </strong>
                   </div>
                 </div>
 
                 {/* Strengths */}
                 {match.strengths_json.length > 0 && (
                   <div style={{ marginBottom: "18px" }}>
-                    <div className="label" style={{ color: "#34d399", marginBottom: "8px" }}>
+                    <div
+                      className="label"
+                      style={{ color: "var(--fit-high-text)", marginBottom: "8px" }}
+                    >
                       Documented Strengths
                     </div>
                     <ul
                       style={{
                         paddingLeft: "18px",
                         fontSize: "0.85rem",
-                        color: "var(--text-muted)",
+                        color: "var(--ink-secondary)",
                       }}
                     >
                       {match.strengths_json.map((st, i) => (
@@ -323,13 +351,16 @@ export default function JobDetailPage() {
                 {/* Identified Gaps */}
                 {match.gaps_json.length > 0 && (
                   <div style={{ marginBottom: "18px" }}>
-                    <div className="label" style={{ color: "#fbbf24", marginBottom: "8px" }}>
+                    <div
+                      className="label"
+                      style={{ color: "var(--fit-moderate-text)", marginBottom: "8px" }}
+                    >
                       Identified Gaps (Missing Evidence)
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                       {match.gaps_json.map((gap, i) => (
                         <div key={i} className="alert-gap" style={{ padding: "8px 12px" }}>
-                          <span style={{ fontSize: "0.8rem" }}>{gap}</span>
+                          <span className="body-sm">{gap}</span>
                         </div>
                       ))}
                     </div>
@@ -337,13 +368,13 @@ export default function JobDetailPage() {
                 )}
               </div>
             ) : (
-              <div className="text-sm text-muted">No match evaluation available.</div>
+              <div className="body-sm text-muted">No match evaluation available.</div>
             )}
           </div>
 
           {/* Supporting Evidence Grounding */}
           <div className="card">
-            <h3 className="title-md" style={{ marginBottom: "14px" }}>
+            <h3 className="headline-sm" style={{ marginBottom: "14px" }}>
               Supporting Career Evidence
             </h3>
             {profile?.evidence && profile.evidence.length > 0 ? (
@@ -356,37 +387,46 @@ export default function JobDetailPage() {
                           display: "flex",
                           alignItems: "center",
                           gap: "8px",
-                          marginBottom: "2px",
+                          marginBottom: "4px",
                         }}
                       >
-                        <span className="evidence-badge">{ev.verification_state}</span>
-                        <strong style={{ fontSize: "0.85rem" }}>{ev.title}</strong>
+                        <span className="verified-evidence-badge">✓ {ev.verification_state}</span>
+                        <strong className="body-sm" style={{ color: "var(--ink-primary)" }}>
+                          {ev.title}
+                        </strong>
                       </div>
-                      <p className="text-xs text-muted">{ev.content}</p>
+                      <p className="body-sm text-muted">{ev.content}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted">No career evidence uploaded yet.</p>
+              <p className="body-sm text-muted">No career evidence uploaded yet.</p>
             )}
           </div>
 
           {/* Action Box */}
-          <div className="card" style={{ background: "var(--bg-subtle)", textAlign: "center" }}>
-            <h4 className="title-md" style={{ fontSize: "1rem", marginBottom: "8px" }}>
-              Ready to Apply?
+          <div
+            className="card"
+            style={{
+              background: "var(--bg-canvas)",
+              textAlign: "center",
+              border: "1px solid var(--border-hairline)",
+            }}
+          >
+            <h4 className="headline-sm" style={{ fontSize: "1rem", marginBottom: "8px" }}>
+              Ready to Tailor?
             </h4>
-            <p className="text-xs text-muted" style={{ marginBottom: "16px" }}>
-              Generate truthful resume variant and tailored cover letter grounded in your verified
-              evidence.
+            <p className="body-sm text-muted" style={{ marginBottom: "16px" }}>
+              Generate truthful resume variants and tailored cover letters grounded strictly in your
+              verified evidence.
             </p>
             <button
               onClick={() => router.push(`/jobs/${job.id}/tailor`)}
               className="btn btn-primary"
               style={{ width: "100%" }}
             >
-              Tailor Application Materials
+              Tailor Application Materials →
             </button>
           </div>
         </div>

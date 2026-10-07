@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -43,7 +44,6 @@ class CareerService:
         if not user:
             user = User(
                 email="alex.chen@example.com",
-                full_name="Alex Chen",
             )
             db.add(user)
             db.flush()
@@ -91,6 +91,33 @@ class CareerService:
             version=1,
         )
         db.add(resume)
+
+        exp1 = CareerExperience(
+            career_profile_id=profile.id,
+            organization="CloudScale Inc",
+            title="Senior Software Engineer",
+            start_date=date(2021, 3, 1),
+            end_date=None,
+            description=(
+                "Built async Python microservices processing 12k req/s at 99.99% uptime. "
+                "Led database optimization across PostgreSQL cluster cutting p99 latency by 40%."
+            ),
+            evidence_status="verified",
+        )
+        exp2 = CareerExperience(
+            career_profile_id=profile.id,
+            organization="Nexus Systems",
+            title="Backend Engineer",
+            start_date=date(2018, 6, 1),
+            end_date=date(2021, 2, 28),
+            description=(
+                "Designed REST and internal services using FastAPI and Redis. "
+                "Implemented automated CI/CD pipelines and Docker containerization."
+            ),
+            evidence_status="verified",
+        )
+        db.add(exp1)
+        db.add(exp2)
 
         ev1 = CareerEvidence(
             career_profile_id=profile.id,

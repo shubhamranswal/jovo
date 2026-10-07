@@ -157,6 +157,10 @@ class CareerProfileSkill(Base, UUIDPrimaryKeyMixin):
         back_populates="career_profile_skills",
     )
 
+    @property
+    def skill_name(self) -> str:
+        return self.skill.normalized_name if self.skill else ""
+
 
 class CareerEvidence(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     """Traceable evidence backing career claims and tailored materials."""

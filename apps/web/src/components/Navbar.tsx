@@ -23,14 +23,12 @@ export function Navbar() {
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <img
               src="/jovo-logo-32.png"
-              alt="Jovo"
+              alt="Jovo Logo"
               width={28}
               height={28}
-              style={{ borderRadius: "6px" }}
+              style={{ borderRadius: "4px" }}
             />
-            <div>
-              <span className="brand-text">Jovo</span>
-            </div>
+            <span className="brand-text">Jovo</span>
           </Link>
           <span className="brand-tag">Apply smarter. Get hired faster.</span>
         </div>
@@ -43,7 +41,7 @@ export function Navbar() {
             href="/applications"
             className={`nav-link ${pathname.startsWith("/applications") ? "active" : ""}`}
           >
-            Applications Capsule
+            Application Capsules
           </Link>
           <Link
             href="/profile"
@@ -57,24 +55,25 @@ export function Navbar() {
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              marginLeft: "16px",
-              padding: "4px 10px",
-              borderRadius: "9999px",
-              background: "var(--bg-subtle)",
-              border: "1px solid var(--border-color)",
-              fontSize: "0.75rem",
+              marginLeft: "12px",
+              padding: "3px 9px",
+              borderRadius: "var(--radius-full)",
+              background: "var(--bg-canvas)",
+              border: "1px solid var(--border-hairline)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.6875rem",
             }}
           >
             <span
               style={{
-                width: "8px",
-                height: "8px",
+                width: "6px",
+                height: "6px",
                 borderRadius: "50%",
-                background: apiOk === true ? "#10b981" : apiOk === false ? "#ef4444" : "#f59e0b",
+                background: apiOk === true ? "#059669" : apiOk === false ? "#ef4444" : "#d97706",
               }}
             />
-            <span style={{ color: "var(--text-muted)" }}>
-              {apiOk === true ? "API Online" : apiOk === false ? "API Offline" : "Checking..."}
+            <span style={{ color: "var(--ink-muted)", fontWeight: 500 }}>
+              {apiOk === true ? "API Active" : apiOk === false ? "API Disconnected" : "Checking..."}
             </span>
           </div>
         </div>

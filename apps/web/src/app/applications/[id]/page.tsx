@@ -151,8 +151,8 @@ export default function ApplicationDetailPage() {
   if (loading) {
     return (
       <div className="container" style={{ paddingTop: "60px", textAlign: "center" }}>
-        <h2 className="title-md">Accessing Application Memory...</h2>
-        <p className="text-sm text-muted">Retrieving immutable Application Capsule snapshot.</p>
+        <h2 className="headline-md">Accessing Application Memory...</h2>
+        <p className="body-sm text-muted">Retrieving immutable Application Capsule snapshot.</p>
       </div>
     );
   }
@@ -161,10 +161,10 @@ export default function ApplicationDetailPage() {
     return (
       <div className="container" style={{ paddingTop: "60px" }}>
         <div className="card" style={{ textAlign: "center", padding: "40px" }}>
-          <h2 className="title-md" style={{ color: "var(--danger)", marginBottom: "8px" }}>
+          <h2 className="headline-md" style={{ color: "var(--fit-gap-text)", marginBottom: "8px" }}>
             Application Capsule Not Found
           </h2>
-          <p className="text-sm text-muted" style={{ marginBottom: "20px" }}>
+          <p className="body-sm text-muted" style={{ marginBottom: "20px" }}>
             {error || "Could not retrieve the requested application."}
           </p>
           <Link href="/applications" className="btn btn-secondary">
@@ -278,7 +278,6 @@ export default function ApplicationDetailPage() {
   });
 
   follow_ups.forEach((f: FollowUp, idx: number) => {
-    // Scheduled event
     timelineEvents.push({
       id: `followup-due-${idx}`,
       date: new Date(f.due_at),
@@ -288,7 +287,6 @@ export default function ApplicationDetailPage() {
       description: f.notes ? `Note: ${f.notes}` : "Follow-up milestone scheduled.",
     });
 
-    // Completed or Skipped event
     if (f.completed_at) {
       const isSkipped = f.status === "Skipped" || (f.notes && f.notes.includes("[SKIPPED]"));
       timelineEvents.push({
@@ -314,13 +312,13 @@ export default function ApplicationDetailPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "20px",
+          marginBottom: "16px",
         }}
       >
-        <Link href="/applications" className="text-sm text-muted">
+        <Link href="/applications" className="body-sm text-muted">
           ← Back to All Applications
         </Link>
-        <span className="text-xs text-dim">Capsule ID: {application.id}</span>
+        <span className="telemetry-xs text-muted">Capsule ID: {application.id}</span>
       </div>
 
       {/* Hero: The Application Capsule Visual Differentiator */}
@@ -330,33 +328,81 @@ export default function ApplicationDetailPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            gap: "20px",
+            gap: "24px",
+            flexWrap: "wrap",
           }}
         >
-          <div>
+          <div style={{ flex: 1, minWidth: "300px" }}>
             <div
               style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}
             >
-              <div className="capsule-stamp">★ Application Capsule • Preserved Memory</div>
-              <span className="badge badge-green">{application.status}</span>
+              <div className="capsule-stamp">★ Application Capsule • Frozen Context</div>
+              <span
+                className={`badge ${
+                  application.status === "Offer"
+                    ? "badge-green"
+                    : application.status === "Applied"
+                      ? "badge-blue"
+                      : "badge-amber"
+                }`}
+              >
+                {application.status}
+              </span>
             </div>
 
-            <h1 className="title-xl" style={{ fontSize: "2rem", marginBottom: "6px" }}>
+            <h1 className="headline-lg" style={{ fontSize: "1.9rem", marginBottom: "4px" }}>
               {application.target_role}
             </h1>
-            <div style={{ fontSize: "1.1rem", color: "var(--text-muted)", marginBottom: "12px" }}>
-              <strong style={{ color: "var(--text-main)" }}>{application.target_company}</strong> •
-              Applied:{" "}
-              {application.applied_at
-                ? new Date(application.applied_at).toLocaleDateString()
-                : new Date(application.created_at).toLocaleDateString()}
+            <div
+              className="body-md"
+              style={{ color: "var(--ink-secondary)", marginBottom: "14px" }}
+            >
+              <strong style={{ color: "var(--ink-primary)" }}>{application.target_company}</strong>{" "}
+              • Applied:{" "}
+              <span style={{ fontFamily: "var(--font-mono)" }}>
+                {application.applied_at
+                  ? new Date(application.applied_at).toLocaleDateString()
+                  : new Date(application.created_at).toLocaleDateString()}
+              </span>
+              {application.source && ` • Source: ${application.source}`}
             </div>
 
-            <p className="text-sm text-dim" style={{ maxWidth: "700px" }}>
-              This capsule holds the exact historical state of what you submitted. Even if the live
-              job posting is taken down or modified, your exact JD snapshot, tailored resume
-              version, and cover letter remain frozen and accessible here forever.
-            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "10px",
+                padding: "14px",
+                background: "var(--bg-canvas)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--border-hairline)",
+              }}
+            >
+              <div>
+                <span className="telemetry-xs text-muted">1. TARGET JD</span>
+                <div className="body-sm" style={{ fontWeight: 600 }}>
+                  {snapshot ? "Frozen Snapshot" : "Catalog Spec"}
+                </div>
+              </div>
+              <div>
+                <span className="telemetry-xs text-muted">2. SUBMITTED RESUME</span>
+                <div className="body-sm" style={{ fontWeight: 600 }}>
+                  {resumeDoc ? resumeDoc.version_label : "Standard Profile"}
+                </div>
+              </div>
+              <div>
+                <span className="telemetry-xs text-muted">3. COVER LETTER</span>
+                <div className="body-sm" style={{ fontWeight: 600 }}>
+                  {coverLetterDoc ? coverLetterDoc.version_label : "Not Required"}
+                </div>
+              </div>
+              <div>
+                <span className="telemetry-xs text-muted">4. FORM Q&A</span>
+                <div className="body-sm" style={{ fontWeight: 600 }}>
+                  {answers.length} Preserved Answers
+                </div>
+              </div>
+            </div>
 
             {/* Next Follow-up Alert Banner */}
             {nextPendingFollowUp && (
@@ -364,13 +410,12 @@ export default function ApplicationDetailPage() {
                 style={{
                   marginTop: "16px",
                   padding: "12px 16px",
-                  background: "rgba(245, 158, 11, 0.08)",
-                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  background: "var(--fit-moderate-bg)",
+                  border: "1px solid var(--fit-moderate-border)",
                   borderRadius: "var(--radius-sm)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  maxWidth: "700px",
                 }}
               >
                 <div>
@@ -383,21 +428,21 @@ export default function ApplicationDetailPage() {
                     }}
                   >
                     <span className="badge badge-amber">Next Follow-up</span>
-                    <strong style={{ fontSize: "0.85rem" }}>
+                    <strong className="body-sm">
                       Due: {new Date(nextPendingFollowUp.due_at).toLocaleDateString()}
                     </strong>
-                    <span className="text-xs text-muted">
+                    <span className="telemetry-xs text-muted">
                       ({nextPendingFollowUp.type.replace(/_/g, " ")})
                     </span>
                   </div>
-                  <div className="text-xs text-dim">
+                  <div className="body-sm text-muted">
                     {nextPendingFollowUp.notes || "Follow-up action item pending."}
                   </div>
                 </div>
                 <button
                   onClick={() => setActiveTab("followups")}
                   className="btn btn-outline btn-sm"
-                  style={{ fontSize: "0.75rem", padding: "6px 12px" }}
+                  style={{ fontSize: "0.75rem" }}
                 >
                   Manage →
                 </button>
@@ -406,11 +451,16 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Quick Actions & Status Control */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: "200px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              minWidth: "200px",
+            }}
+          >
             <div className="input-group">
-              <label className="label" style={{ fontSize: "0.75rem" }}>
-                Update Status
-              </label>
+              <label className="label">Update Status</label>
               <select
                 className="input"
                 value={application.status}
@@ -433,7 +483,7 @@ export default function ApplicationDetailPage() {
             <button
               onClick={handleTriggerPrep}
               disabled={generatingPrep}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary"
               style={{ width: "100%", marginTop: "4px" }}
             >
               {generatingPrep ? "Synthesizing Prep..." : "⚡ Prepare for Interview"}
@@ -442,50 +492,41 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          marginBottom: "24px",
-          borderBottom: "1px solid var(--border-color)",
-          paddingBottom: "12px",
-          overflowX: "auto",
-        }}
-      >
+      {/* Editorial Navigation Tabs */}
+      <div className="tabs-header">
         <button
           onClick={() => setActiveTab("timeline")}
-          className={`btn ${activeTab === "timeline" ? "btn-primary" : "btn-secondary"} btn-sm`}
+          className={`tab-btn ${activeTab === "timeline" ? "active" : ""}`}
         >
-          1. Timeline ({timelineEvents.length})
+          1. Journey & Memory Timeline ({timelineEvents.length})
         </button>
         <button
           onClick={() => setActiveTab("snapshot")}
-          className={`btn ${activeTab === "snapshot" ? "btn-primary" : "btn-secondary"} btn-sm`}
+          className={`tab-btn ${activeTab === "snapshot" ? "active" : ""}`}
         >
-          2. Exact Job Snapshot
+          2. Frozen Job Snapshot
         </button>
         <button
           onClick={() => setActiveTab("documents")}
-          className={`btn ${activeTab === "documents" ? "btn-primary" : "btn-secondary"} btn-sm`}
+          className={`tab-btn ${activeTab === "documents" ? "active" : ""}`}
         >
           3. Submitted Documents ({documents.length})
         </button>
         <button
           onClick={() => setActiveTab("qa")}
-          className={`btn ${activeTab === "qa" ? "btn-primary" : "btn-secondary"} btn-sm`}
+          className={`tab-btn ${activeTab === "qa" ? "active" : ""}`}
         >
           4. Captured Answers ({answers.length})
         </button>
         <button
           onClick={() => setActiveTab("prep")}
-          className={`btn ${activeTab === "prep" ? "btn-primary" : "btn-secondary"} btn-sm`}
+          className={`tab-btn ${activeTab === "prep" ? "active" : ""}`}
         >
-          5. Interview Prep ({interviews.length})
+          5. Grounded Interview Prep ({interviews.length})
         </button>
         <button
           onClick={() => setActiveTab("followups")}
-          className={`btn ${activeTab === "followups" ? "btn-primary" : "btn-secondary"} btn-sm`}
+          className={`tab-btn ${activeTab === "followups" ? "active" : ""}`}
         >
           6. Follow-ups ({follow_ups.length})
         </button>
@@ -496,8 +537,8 @@ export default function ApplicationDetailPage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="title-md">Application Journey & Memory Timeline</h3>
-              <p className="text-xs text-muted">
+              <h3 className="headline-sm">Application Journey & Memory Timeline</h3>
+              <p className="body-sm text-muted">
                 Chronological audit trail of all actions, submissions, and preserved artifacts
               </p>
             </div>
@@ -505,7 +546,7 @@ export default function ApplicationDetailPage() {
           </div>
 
           {timelineEvents.length === 0 ? (
-            <div className="text-sm text-muted" style={{ textAlign: "center", padding: "40px 0" }}>
+            <div className="body-sm text-muted" style={{ textAlign: "center", padding: "40px 0" }}>
               No timeline milestones recorded yet.
             </div>
           ) : (
@@ -513,7 +554,7 @@ export default function ApplicationDetailPage() {
               style={{
                 position: "relative",
                 paddingLeft: "28px",
-                borderLeft: "2px solid var(--border-color)",
+                borderLeft: "2px solid var(--border-hairline)",
                 marginLeft: "12px",
                 marginTop: "16px",
                 display: "flex",
@@ -523,7 +564,6 @@ export default function ApplicationDetailPage() {
             >
               {timelineEvents.map((evt) => (
                 <div key={evt.id} style={{ position: "relative" }}>
-                  {/* Timeline indicator node */}
                   <div
                     style={{
                       position: "absolute",
@@ -534,14 +574,14 @@ export default function ApplicationDetailPage() {
                       borderRadius: "50%",
                       background:
                         evt.badgeType === "green"
-                          ? "#34d399"
+                          ? "#059669"
                           : evt.badgeType === "amber"
-                            ? "#fbbf24"
+                            ? "#d97706"
                             : evt.badgeType === "gray"
                               ? "#94a3b8"
-                              : "#60a5fa",
-                      border: "2px solid var(--bg-card)",
-                      boxShadow: "0 0 0 2px var(--border-color)",
+                              : "#0284c7",
+                      border: "2px solid #ffffff",
+                      boxShadow: "0 0 0 1px var(--border-hairline)",
                     }}
                   />
 
@@ -554,16 +594,16 @@ export default function ApplicationDetailPage() {
                     }}
                   >
                     <span className={`badge badge-${evt.badgeType}`}>{evt.badge}</span>
-                    <span className="text-xs text-muted">{evt.date.toLocaleString()}</span>
+                    <span className="telemetry-xs text-muted">{evt.date.toLocaleString()}</span>
                   </div>
 
-                  <h4
-                    className="title-sm"
-                    style={{ fontSize: "0.95rem", fontWeight: "600", marginBottom: "4px" }}
-                  >
+                  <h4 className="headline-sm" style={{ fontSize: "0.95rem", marginBottom: "4px" }}>
                     {evt.title}
                   </h4>
-                  <p className="text-sm text-dim" style={{ lineHeight: "1.5" }}>
+                  <p
+                    className="body-sm"
+                    style={{ color: "var(--ink-secondary)", lineHeight: "1.5" }}
+                  >
                     {evt.description}
                   </p>
                 </div>
@@ -578,12 +618,14 @@ export default function ApplicationDetailPage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="title-md">Frozen Job Description Snapshot</h3>
-              <p className="text-xs text-muted">
+              <h3 className="headline-sm">Frozen Job Description Snapshot</h3>
+              <p className="body-sm text-muted">
                 Captured on{" "}
-                {snapshot?.captured_at
-                  ? new Date(snapshot.captured_at).toLocaleString()
-                  : "Submission"}{" "}
+                <span style={{ fontFamily: "var(--font-mono)" }}>
+                  {snapshot?.captured_at
+                    ? new Date(snapshot.captured_at).toLocaleString()
+                    : "Submission"}
+                </span>{" "}
                 • Permanent offline archive
               </p>
             </div>
@@ -600,17 +642,18 @@ export default function ApplicationDetailPage() {
           </div>
 
           <div
-            className="text-sm"
+            className="body-sm"
             style={{
               lineHeight: "1.7",
-              color: "#cbd5e1",
+              color: "var(--ink-body)",
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
               maxHeight: "500px",
               overflowY: "auto",
-              background: "var(--bg-subtle)",
+              background: "var(--bg-canvas)",
               padding: "20px",
               borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--border-hairline)",
             }}
           >
             {(snapshot?.form_fields_json?.job_description as string) ||
@@ -627,15 +670,15 @@ export default function ApplicationDetailPage() {
           <div className="card">
             <div className="card-header">
               <div>
-                <h3 className="title-md">Submitted Resume Version</h3>
-                <p className="text-xs text-muted">
+                <h3 className="headline-sm">Submitted Resume Version</h3>
+                <p className="body-sm text-muted">
                   {resumeDoc ? resumeDoc.version_label : "No resume version linked"}
                 </p>
               </div>
-              <span className="badge badge-blue">Submitted</span>
+              <span className="badge badge-blue">Submitted Version</span>
             </div>
 
-            <div className="text-xs text-muted" style={{ marginBottom: "12px" }}>
+            <div className="telemetry-xs text-muted" style={{ marginBottom: "12px" }}>
               Linked Document ID: {resumeDoc?.document_id || "None"}
             </div>
 
@@ -653,15 +696,15 @@ export default function ApplicationDetailPage() {
           <div className="card">
             <div className="card-header">
               <div>
-                <h3 className="title-md">Submitted Cover Letter</h3>
-                <p className="text-xs text-muted">
+                <h3 className="headline-sm">Submitted Cover Letter</h3>
+                <p className="body-sm text-muted">
                   {coverLetterDoc ? coverLetterDoc.version_label : "No cover letter linked"}
                 </p>
               </div>
               <span className="badge badge-amber">Cover Letter</span>
             </div>
 
-            <div className="text-xs text-muted" style={{ marginBottom: "12px" }}>
+            <div className="telemetry-xs text-muted" style={{ marginBottom: "12px" }}>
               Linked Document ID: {coverLetterDoc?.document_id || "None"}
             </div>
 
@@ -683,8 +726,8 @@ export default function ApplicationDetailPage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="title-md">Captured Form Questions & Answers</h3>
-              <p className="text-xs text-muted">
+              <h3 className="headline-sm">Captured Form Questions & Answers</h3>
+              <p className="body-sm text-muted">
                 Recorded from the Workday or generic web application form
               </p>
             </div>
@@ -692,7 +735,7 @@ export default function ApplicationDetailPage() {
           </div>
 
           {answers.length === 0 ? (
-            <div className="text-sm text-muted" style={{ textAlign: "center", padding: "40px 0" }}>
+            <div className="body-sm text-muted" style={{ textAlign: "center", padding: "40px 0" }}>
               No custom application form fields were captured for this submission.
             </div>
           ) : (
@@ -702,8 +745,8 @@ export default function ApplicationDetailPage() {
                   key={ans.id || i}
                   style={{
                     padding: "16px",
-                    background: "var(--bg-subtle)",
-                    border: "1px solid var(--border-color)",
+                    background: "var(--bg-canvas)",
+                    border: "1px solid var(--border-hairline)",
                     borderRadius: "var(--radius-sm)",
                   }}
                 >
@@ -715,7 +758,7 @@ export default function ApplicationDetailPage() {
                       marginBottom: "8px",
                     }}
                   >
-                    <div className="label" style={{ marginBottom: 0, fontWeight: "600" }}>
+                    <div className="label" style={{ marginBottom: 0 }}>
                       {ans.question_text || `Question ${i + 1}`}
                     </div>
                     <span className={`badge ${ans.user_approved ? "badge-green" : "badge-amber"}`}>
@@ -724,20 +767,20 @@ export default function ApplicationDetailPage() {
                   </div>
 
                   <div
-                    className="text-sm"
+                    className="body-sm"
                     style={{
-                      fontWeight: "500",
+                      fontWeight: 500,
                       marginBottom: "8px",
-                      background: "rgba(255,255,255,0.03)",
+                      background: "#ffffff",
                       padding: "10px 12px",
-                      borderRadius: "4px",
-                      border: "1px solid rgba(255,255,255,0.05)",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border-hairline)",
                     }}
                   >
                     {ans.answer_text}
                   </div>
 
-                  <div className="text-xs text-dim">
+                  <div className="telemetry-xs text-muted">
                     Source: {ans.source || "Extension Autofill"} • Preserved in Capsule
                   </div>
                 </div>
@@ -750,12 +793,11 @@ export default function ApplicationDetailPage() {
       {/* Tab 5: Grounded Interview Preparation */}
       {activeTab === "prep" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {/* Header Action */}
           <div className="card">
             <div className="card-header" style={{ marginBottom: 0 }}>
               <div>
-                <h3 className="title-md">Grounded Interview Preparation</h3>
-                <p className="text-xs text-muted">
+                <h3 className="headline-sm">Grounded Interview Preparation</h3>
+                <p className="body-sm text-muted">
                   Synthesized strictly from the frozen JD, exact submitted resume, approved form
                   answers, and verified career evidence
                 </p>
@@ -773,11 +815,11 @@ export default function ApplicationDetailPage() {
           {interviews.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: "60px 20px" }}>
               <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🎯</div>
-              <h3 className="title-md" style={{ marginBottom: "8px" }}>
+              <h3 className="headline-sm" style={{ marginBottom: "8px" }}>
                 Ready to Prepare for {application.target_role} at {application.target_company}?
               </h3>
               <p
-                className="text-sm text-muted"
+                className="body-sm text-muted"
                 style={{ maxWidth: "600px", margin: "0 auto 24px" }}
               >
                 Jovo will analyze your exact submitted materials, identify likely technical and
@@ -799,23 +841,20 @@ export default function ApplicationDetailPage() {
                 <div
                   className="card"
                   style={{
-                    borderLeft: "4px solid var(--primary)",
-                    background: "rgba(37, 99, 235, 0.05)",
+                    borderLeft: "4px solid var(--brand-primary)",
+                    background: "var(--bg-canvas)",
                   }}
                 >
                   <h4
-                    className="title-sm"
+                    className="label"
                     style={{
-                      color: "var(--primary)",
+                      color: "var(--ink-primary)",
                       marginBottom: "6px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      fontSize: "0.75rem",
                     }}
                   >
                     Employer Priorities (From Frozen JD)
                   </h4>
-                  <p className="text-sm" style={{ lineHeight: "1.6", color: "#e2e8f0" }}>
+                  <p className="body-sm" style={{ lineHeight: "1.6" }}>
                     {prepJson.role_summary}
                   </p>
                 </div>
@@ -826,8 +865,8 @@ export default function ApplicationDetailPage() {
                 <div className="card">
                   <div className="card-header">
                     <div>
-                      <h4 className="title-sm">Interview Readiness Assessment</h4>
-                      <p className="text-xs text-muted">
+                      <h4 className="headline-sm">Interview Readiness Assessment</h4>
+                      <p className="body-sm text-muted">
                         Explainable fit analysis based on verified evidence vs. job requirements (no
                         fake percentages)
                       </p>
@@ -846,10 +885,7 @@ export default function ApplicationDetailPage() {
                     </span>
                   </div>
 
-                  <p
-                    className="text-sm"
-                    style={{ marginBottom: "16px", lineHeight: "1.6", color: "#cbd5e1" }}
-                  >
+                  <p className="body-sm" style={{ marginBottom: "16px", lineHeight: "1.6" }}>
                     {readiness.explanation}
                   </p>
 
@@ -858,24 +894,25 @@ export default function ApplicationDetailPage() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "8px",
-                      background: "var(--bg-subtle)",
+                      background: "var(--bg-canvas)",
                       padding: "14px",
                       borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border-hairline)",
                     }}
                   >
-                    <div
-                      className="label"
-                      style={{ fontSize: "0.75rem", textTransform: "uppercase" }}
-                    >
-                      Readiness Signals:
-                    </div>
+                    <div className="label">Readiness Signals:</div>
                     {readiness.signals?.map((sig: string, idx: number) => (
                       <div
                         key={idx}
-                        className="text-xs text-dim"
-                        style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                        className="body-sm"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          color: "var(--ink-secondary)",
+                        }}
                       >
-                        <span style={{ color: "var(--primary)" }}>•</span> {sig}
+                        <span style={{ color: "var(--accent-action)" }}>•</span> {sig}
                       </div>
                     ))}
                   </div>
@@ -887,18 +924,18 @@ export default function ApplicationDetailPage() {
                 <div
                   className="card"
                   style={{
-                    border: "1px solid rgba(245, 158, 11, 0.3)",
-                    background: "rgba(245, 158, 11, 0.04)",
+                    border: "1px solid var(--fit-moderate-border)",
+                    background: "var(--fit-moderate-bg)",
                   }}
                 >
                   <div className="card-header">
                     <div>
-                      <h4 className="title-sm" style={{ color: "#fbbf24" }}>
+                      <h4 className="headline-sm" style={{ color: "var(--fit-moderate-text)" }}>
                         ⚠️ Stated Job Requirements Lacking Verified Evidence
                       </h4>
-                      <p className="text-xs text-muted">
+                      <p className="body-sm text-muted">
                         Jovo strictly avoids inventing candidate background. Be prepared to address
-                        how you ramp up or bridge these areas:
+                        how you bridge these areas:
                       </p>
                     </div>
                     <span className="badge badge-amber">
@@ -910,13 +947,13 @@ export default function ApplicationDetailPage() {
                     {prepJson.evidence_gaps.map((gap: string, i: number) => (
                       <div
                         key={i}
-                        className="text-xs"
+                        className="body-sm"
                         style={{
                           padding: "8px 12px",
-                          background: "rgba(0,0,0,0.2)",
-                          borderRadius: "4px",
-                          color: "#fde68a",
-                          borderLeft: "3px solid #fbbf24",
+                          background: "#ffffff",
+                          borderRadius: "var(--radius-sm)",
+                          color: "#78350f",
+                          borderLeft: "3px solid #d97706",
                         }}
                       >
                         {gap}
@@ -930,8 +967,8 @@ export default function ApplicationDetailPage() {
               <div className="card">
                 <div className="card-header">
                   <div>
-                    <h4 className="title-sm">Grounded Practice Questions</h4>
-                    <p className="text-xs text-muted">
+                    <h4 className="headline-sm">Grounded Practice Questions</h4>
+                    <p className="body-sm text-muted">
                       Derived from required technologies, submitted resume accomplishments, and
                       approved form answers
                     </p>
@@ -959,13 +996,13 @@ export default function ApplicationDetailPage() {
 
                 {filteredQuestions.length === 0 ? (
                   <div
-                    className="text-sm text-muted"
+                    className="body-sm text-muted"
                     style={{ textAlign: "center", padding: "30px 0" }}
                   >
                     No questions under this category.
                   </div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {filteredQuestions.map((q, idx) => {
                       const isEvidenceGap =
                         q.relevant_evidence.includes("Evidence not found") ||
@@ -975,8 +1012,8 @@ export default function ApplicationDetailPage() {
                           key={q.id || idx}
                           style={{
                             padding: "18px",
-                            background: "var(--bg-subtle)",
-                            border: "1px solid var(--border-color)",
+                            background: "var(--bg-canvas)",
+                            border: "1px solid var(--border-hairline)",
                             borderRadius: "var(--radius-sm)",
                           }}
                         >
@@ -1000,15 +1037,17 @@ export default function ApplicationDetailPage() {
                             >
                               {q.category}
                             </span>
-                            <span className="text-xs text-dim">Question #{idx + 1}</span>
+                            <span className="telemetry-xs text-muted">Question #{idx + 1}</span>
                           </div>
 
                           <h5
                             style={{
+                              fontFamily: "var(--font-display)",
                               fontSize: "1rem",
-                              fontWeight: "600",
+                              fontWeight: 600,
                               marginBottom: "10px",
                               lineHeight: "1.4",
+                              color: "var(--ink-primary)",
                             }}
                           >
                             {q.question}
@@ -1025,40 +1064,37 @@ export default function ApplicationDetailPage() {
                             <div
                               style={{
                                 padding: "10px",
-                                background: "rgba(255,255,255,0.02)",
-                                borderRadius: "4px",
+                                background: "#ffffff",
+                                borderRadius: "var(--radius-sm)",
+                                border: "1px solid var(--border-hairline)",
                               }}
                             >
-                              <div
-                                className="label"
-                                style={{ fontSize: "0.7rem", marginBottom: "4px" }}
-                              >
+                              <div className="label" style={{ marginBottom: "4px" }}>
                                 Why it may be asked:
                               </div>
-                              <p className="text-xs text-dim">{q.why_asked}</p>
+                              <p className="body-sm text-muted">{q.why_asked}</p>
                             </div>
 
                             <div
                               style={{
                                 padding: "10px",
-                                background: isEvidenceGap
-                                  ? "rgba(245, 158, 11, 0.05)"
-                                  : "rgba(255,255,255,0.02)",
-                                borderRadius: "4px",
+                                background: isEvidenceGap ? "var(--fit-moderate-bg)" : "#ffffff",
+                                borderRadius: "var(--radius-sm)",
                                 border: isEvidenceGap
-                                  ? "1px solid rgba(245, 158, 11, 0.2)"
-                                  : "none",
+                                  ? "1px solid var(--fit-moderate-border)"
+                                  : "1px solid var(--border-hairline)",
                               }}
                             >
-                              <div
-                                className="label"
-                                style={{ fontSize: "0.7rem", marginBottom: "4px" }}
-                              >
+                              <div className="label" style={{ marginBottom: "4px" }}>
                                 Relevant Evidence Backing:
                               </div>
                               <p
-                                className="text-xs"
-                                style={{ color: isEvidenceGap ? "#fbbf24" : "var(--text-muted)" }}
+                                className="body-sm"
+                                style={{
+                                  color: isEvidenceGap
+                                    ? "var(--fit-moderate-text)"
+                                    : "var(--ink-secondary)",
+                                }}
                               >
                                 {q.relevant_evidence}
                               </p>
@@ -1066,23 +1102,17 @@ export default function ApplicationDetailPage() {
                           </div>
 
                           <div style={{ marginBottom: "12px" }}>
-                            <div
-                              className="label"
-                              style={{ fontSize: "0.7rem", marginBottom: "4px" }}
-                            >
+                            <div className="label" style={{ marginBottom: "4px" }}>
                               Preparation Advice & Strategy:
                             </div>
-                            <p className="text-xs text-muted" style={{ lineHeight: "1.5" }}>
+                            <p className="body-sm text-muted" style={{ lineHeight: "1.5" }}>
                               {q.prep_notes}
                             </p>
                           </div>
 
                           {/* Candidate Practice Box */}
                           <div style={{ marginTop: "10px" }}>
-                            <label
-                              className="label"
-                              style={{ fontSize: "0.7rem", marginBottom: "4px" }}
-                            >
+                            <label className="label" style={{ marginBottom: "4px" }}>
                               Your Practice Talking Points / Answer:
                             </label>
                             <textarea
@@ -1093,7 +1123,7 @@ export default function ApplicationDetailPage() {
                               onChange={(e) =>
                                 setPracticeNotes({ ...practiceNotes, [q.id]: e.target.value })
                               }
-                              style={{ fontSize: "0.85rem", width: "100%", resize: "vertical" }}
+                              style={{ width: "100%", resize: "vertical" }}
                             />
                           </div>
                         </div>
@@ -1106,10 +1136,10 @@ export default function ApplicationDetailPage() {
               {/* Questions to Ask Interviewers */}
               {prepJson.questions_to_ask && prepJson.questions_to_ask.length > 0 && (
                 <div className="card">
-                  <h4 className="title-sm" style={{ marginBottom: "8px" }}>
+                  <h4 className="headline-sm" style={{ marginBottom: "8px" }}>
                     Strategic Questions to Ask Interviewers
                   </h4>
-                  <p className="text-xs text-muted" style={{ marginBottom: "14px" }}>
+                  <p className="body-sm text-muted" style={{ marginBottom: "14px" }}>
                     High-signal questions demonstrating depth in system design, operational
                     ownership, and roadmap execution:
                   </p>
@@ -1122,7 +1152,7 @@ export default function ApplicationDetailPage() {
                     }}
                   >
                     {prepJson.questions_to_ask.map((item: string, i: number) => (
-                      <li key={i} className="text-sm text-dim">
+                      <li key={i} className="body-sm" style={{ color: "var(--ink-secondary)" }}>
                         {item}
                       </li>
                     ))}
@@ -1133,7 +1163,7 @@ export default function ApplicationDetailPage() {
               {/* Preparation Checklist */}
               {prepJson.preparation_checklist && prepJson.preparation_checklist.length > 0 && (
                 <div className="card">
-                  <h4 className="title-sm" style={{ marginBottom: "8px" }}>
+                  <h4 className="headline-sm" style={{ marginBottom: "8px" }}>
                     Pre-Interview Checklist Grounded in Capsule
                   </h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1145,12 +1175,13 @@ export default function ApplicationDetailPage() {
                           alignItems: "center",
                           gap: "10px",
                           padding: "8px 12px",
-                          background: "var(--bg-subtle)",
-                          borderRadius: "4px",
+                          background: "var(--bg-canvas)",
+                          border: "1px solid var(--border-hairline)",
+                          borderRadius: "var(--radius-sm)",
                         }}
                       >
-                        <span style={{ color: "var(--primary)" }}>✓</span>
-                        <span className="text-xs text-dim">{item}</span>
+                        <span style={{ color: "var(--brand-primary)", fontWeight: 700 }}>✓</span>
+                        <span className="body-sm text-muted">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -1168,8 +1199,8 @@ export default function ApplicationDetailPage() {
           <div className="card">
             <div className="card-header">
               <div>
-                <h3 className="title-md">Schedule Follow-up Action</h3>
-                <p className="text-xs text-muted">
+                <h3 className="headline-sm">Schedule Follow-up Action</h3>
+                <p className="body-sm text-muted">
                   Keep track of thank-you emails, recruiter check-ins, and timeline commitments
                   (reminders only; no automated emails sent)
                 </p>
@@ -1187,9 +1218,7 @@ export default function ApplicationDetailPage() {
               }}
             >
               <div className="input-group">
-                <label className="label" style={{ fontSize: "0.75rem" }}>
-                  Follow-up Type
-                </label>
+                <label className="label">Follow-up Type</label>
                 <select
                   className="input"
                   value={followUpType}
@@ -1204,9 +1233,7 @@ export default function ApplicationDetailPage() {
               </div>
 
               <div className="input-group">
-                <label className="label" style={{ fontSize: "0.75rem" }}>
-                  Due Date
-                </label>
+                <label className="label">Due Date</label>
                 <input
                   type="date"
                   className="input"
@@ -1218,13 +1245,11 @@ export default function ApplicationDetailPage() {
               </div>
 
               <div className="input-group">
-                <label className="label" style={{ fontSize: "0.75rem" }}>
-                  Notes / Context
-                </label>
+                <label className="label">Notes / Context</label>
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Send thank-you note referencing the Raft consensus discussion..."
+                  placeholder="e.g. Send thank-you note referencing the consensus protocol discussion..."
                   value={followUpNotes}
                   onChange={(e) => setFollowUpNotes(e.target.value)}
                   style={{ padding: "8px 10px", fontSize: "0.85rem" }}
@@ -1246,8 +1271,8 @@ export default function ApplicationDetailPage() {
           <div className="card">
             <div className="card-header">
               <div>
-                <h3 className="title-md">Scheduled Follow-ups</h3>
-                <p className="text-xs text-muted">
+                <h3 className="headline-sm">Scheduled Follow-ups</h3>
+                <p className="body-sm text-muted">
                   Historical and upcoming touchpoints for {application.target_company}
                 </p>
               </div>
@@ -1257,7 +1282,7 @@ export default function ApplicationDetailPage() {
             {follow_ups.length === 0 ? (
               <div
                 style={{ textAlign: "center", padding: "40px 0" }}
-                className="text-sm text-muted"
+                className="body-sm text-muted"
               >
                 No follow-up reminders scheduled yet. Schedule one above!
               </div>
@@ -1275,8 +1300,8 @@ export default function ApplicationDetailPage() {
                         alignItems: "center",
                         justifyContent: "space-between",
                         padding: "16px",
-                        background: "var(--bg-subtle)",
-                        border: "1px solid var(--border-color)",
+                        background: "var(--bg-canvas)",
+                        border: "1px solid var(--border-hairline)",
                         borderRadius: "var(--radius-sm)",
                       }}
                     >
@@ -1296,12 +1321,10 @@ export default function ApplicationDetailPage() {
                           >
                             {isDone ? "Completed" : isSkipped ? "Skipped" : "Pending"}
                           </span>
-                          <strong style={{ fontSize: "0.95rem" }}>
-                            {f.type.replace(/_/g, " ")}
-                          </strong>
+                          <strong className="body-sm">{f.type.replace(/_/g, " ")}</strong>
                         </div>
 
-                        <div className="text-xs text-muted">
+                        <div className="telemetry-xs text-muted">
                           Due: {new Date(f.due_at).toLocaleDateString()}{" "}
                           {f.completed_at
                             ? `• ${isSkipped ? "Skipped" : "Completed"}: ${new Date(f.completed_at).toLocaleDateString()}`
@@ -1317,7 +1340,10 @@ export default function ApplicationDetailPage() {
                               onClick={() => handleUpdateFollowUp(f.id, "Completed")}
                               disabled={updatingFollowUpId === f.id}
                               className="btn btn-outline btn-sm"
-                              style={{ color: "var(--success)", borderColor: "var(--success)" }}
+                              style={{
+                                color: "var(--fit-high-text)",
+                                borderColor: "var(--fit-high-border)",
+                              }}
                             >
                               ✓ Mark Complete
                             </button>

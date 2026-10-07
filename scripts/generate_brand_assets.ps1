@@ -58,6 +58,11 @@ foreach ($s in $sizes) {
     Resize-Image -Image $sourceImg -Width $s -Height $s -DestinationPath $outPath
 }
 
+# Also copy logo sizes to web public for web UI consumption
+foreach ($s in $sizes) {
+    Copy-Item -Path (Join-Path $brandDir "jovo-logo-$s.png") -Destination (Join-Path $webPublicDir "jovo-logo-$s.png") -Force
+}
+
 # 2. Extension icons (16, 32, 48, 128)
 foreach ($s in @(16, 32, 48, 128)) {
     $outPath = Join-Path $extIconDir "icon-$s.png"
@@ -71,7 +76,7 @@ Resize-Image -Image $sourceImg -Width 180 -Height 180 -DestinationPath (Join-Pat
 Resize-Image -Image $sourceImg -Width 192 -Height 192 -DestinationPath (Join-Path $webPublicDir "icon-192.png")
 Resize-Image -Image $sourceImg -Width 512 -Height 512 -DestinationPath (Join-Path $webPublicDir "icon-512.png")
 
-# Also save 32x32 bitmap as ICO
+# Also save 32x32 bitmap as ICO in brand and web public
 $ico32 = New-Object System.Drawing.Bitmap($sourceImg, 32, 32)
 $icoHandle = $ico32.GetHicon()
 $icon = [System.Drawing.Icon]::FromHandle($icoHandle)
@@ -81,16 +86,11 @@ $stream.Close()
 $stream2 = [System.IO.File]::OpenWrite((Join-Path $webPublicDir "favicon.ico"))
 $icon.Save($stream2)
 $stream2.Close()
-# Also place favicon.ico in apps/web/src/app/ if Next.js App Router uses it
-$appFaviconPath = "apps\web\src\app\favicon.ico"
-$stream3 = [System.IO.File]::OpenWrite($appFaviconPath)
-$icon.Save($stream3)
-$stream3.Close()
 
 $icon.Dispose()
 $ico32.Dispose()
 
-Write-Host "Generated favicon.ico in brand, public, and app router."
+Write-Host "Generated favicon.ico in brand and public."
 
 # 4. Generate Open Graph image (1200 x 630)
 # Clean, professional dark card with canonical Jovo symbol, Jovo wordmark, and tagline

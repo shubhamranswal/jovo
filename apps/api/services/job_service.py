@@ -86,7 +86,48 @@ class JobService:
         return job
 
     @staticmethod
+    def _seed_demo_job_if_empty(db: Session) -> None:
+        """Seed deterministic demo job matching Workday fixture if catalog is empty."""
+        has_any = db.scalar(select(Job.id).limit(1))
+        if not has_any:
+            JobService.get_or_create_company(db, "Acme Cloud", "acmecloud.com")
+            JobService.create_job(
+                db,
+                JobCreate(
+                    title="Senior Platform Engineer",
+                    company_name="Acme Cloud",
+                    company_domain="acmecloud.com",
+                    location="San Francisco, CA (Hybrid)",
+                    remote_type="hybrid",
+                    employment_type="full_time",
+                    salary_min=165000,
+                    salary_max=215000,
+                    currency="USD",
+                    description=(
+                        "We are seeking a Senior Platform Engineer to build scalable microservices "
+                        "and high-throughput distributed queues. You will partner with our cloud "
+                        "infrastructure team to scale distributed databases and low-latency API "
+                        "gateways."
+                    ),
+                    normalized_requirements_json=[
+                        "python",
+                        "fastapi",
+                        "postgresql",
+                        "docker",
+                        "distributed systems",
+                    ],
+                    source_urls_json=[
+                        "https://acmecloud.wd1.myworkdayjobs.com/en-US/careers/job/REQ-84920"
+                    ],
+                    source_names_json=["Workday"],
+                    canonical_url="https://acmecloud.wd1.myworkdayjobs.com/en-US/careers/job/REQ-84920",
+                    external_id="REQ-84920",
+                ),
+            )
+
+    @staticmethod
     def list_jobs(db: Session, query_params: JobSearchQuery) -> tuple[list[Job], int]:
+        JobService._seed_demo_job_if_empty(db)
         stmt = select(Job).options(joinedload(Job.company))
 
         if query_params.query:

@@ -28,9 +28,7 @@ function JobSearchContent() {
       try {
         const res = await api.listJobs({ page: 1, page_size: 20 });
         setJobs(res.items || []);
-        setLastQueryInfo(
-          `Viewing ${res.items.length} previously discovered jobs in local catalog.`
-        );
+        setLastQueryInfo(`Viewing ${res.items.length} verified jobs in local catalog.`);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to load job catalog";
         setError(msg);
@@ -100,19 +98,23 @@ function JobSearchContent() {
   };
 
   return (
-    <div className="container" style={{ paddingTop: "32px" }}>
+    <div className="container" style={{ paddingTop: "36px" }}>
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
-        <h1 className="title-lg" style={{ marginBottom: "6px" }}>
+        <div style={{ display: "inline-block", marginBottom: "8px" }}>
+          <span className="telemetry-xs badge badge-gray">PROVENANCE & DISCOVERY ENGINE</span>
+        </div>
+        <h1 className="headline-lg" style={{ marginBottom: "6px" }}>
           Discover & Inspect Opportunities
         </h1>
-        <p className="text-muted text-sm">
-          Search the local Jovo catalog or explicitly query Google Jobs via SerpApi.
+        <p className="body-md text-muted">
+          Explore the persisted catalog or trigger an explicit query against Google Jobs via
+          SerpApi.
         </p>
       </div>
 
       {/* Explicit Search Controls */}
-      <div className="card" style={{ marginBottom: "32px", padding: "24px" }}>
+      <div className="card" style={{ marginBottom: "28px", padding: "24px" }}>
         <form onSubmit={handleLiveSerpApiDiscovery}>
           <div
             style={{
@@ -167,9 +169,18 @@ function JobSearchContent() {
                 id="remote-only-filter"
                 checked={remoteOnly}
                 onChange={(e) => setRemoteOnly(e.target.checked)}
-                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  cursor: "pointer",
+                  accentColor: "var(--ink-primary)",
+                }}
               />
-              <label htmlFor="remote-only-filter" className="text-sm" style={{ cursor: "pointer" }}>
+              <label
+                htmlFor="remote-only-filter"
+                className="label-md"
+                style={{ cursor: "pointer", userSelect: "none" }}
+              >
                 Remote Only
               </label>
             </div>
@@ -180,12 +191,13 @@ function JobSearchContent() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              borderTop: "1px solid var(--border-color)",
+              borderTop: "1px solid var(--border-hairline)",
               paddingTop: "16px",
             }}
           >
-            <div className="text-xs text-dim">
-              Note: Clicking &quot;Live SerpApi Discovery&quot; executes 1 live Google Jobs search.
+            <div className="telemetry-xs text-muted">
+              SerpApi live discovery requires an explicit submission. Local catalog filtering uses 0
+              API quota.
             </div>
 
             <div style={{ display: "flex", gap: "10px" }}>
@@ -215,24 +227,20 @@ function JobSearchContent() {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "10px 16px",
-            background: "var(--bg-subtle)",
-            border: "1px solid var(--border-color)",
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-hairline)",
             borderRadius: "var(--radius-sm)",
             marginBottom: "24px",
-            fontSize: "0.825rem",
           }}
         >
-          <span className="text-muted">{lastQueryInfo}</span>
-          <span className="badge badge-gray">{jobs.length} Results</span>
+          <span className="telemetry-xs text-muted">{lastQueryInfo}</span>
+          <span className="telemetry-xs badge badge-gray">{jobs.length} Results</span>
         </div>
       )}
 
       {/* Error state */}
       {error && (
-        <div
-          className="alert-gap"
-          style={{ marginBottom: "24px", background: "var(--danger-bg)", color: "#f87171" }}
-        >
+        <div className="alert-danger" style={{ marginBottom: "24px" }}>
           <div>
             <strong>Discovery Error:</strong> {error}
           </div>
@@ -242,10 +250,10 @@ function JobSearchContent() {
       {/* Loading state */}
       {loading && (
         <div style={{ textAlign: "center", padding: "60px 0" }}>
-          <div className="title-md" style={{ marginBottom: "8px" }}>
+          <div className="headline-md" style={{ marginBottom: "8px" }}>
             Searching Opportunities...
           </div>
-          <p className="text-sm text-muted">
+          <p className="body-sm text-muted">
             {dataSource === "serpapi"
               ? "Connecting to SerpApi Google Jobs engine and normalizing results..."
               : "Querying local Jovo catalog..."}
@@ -257,12 +265,16 @@ function JobSearchContent() {
       {!loading && jobs.length === 0 && (
         <div
           className="card"
-          style={{ textAlign: "center", padding: "60px 20px", background: "var(--bg-subtle)" }}
+          style={{
+            textAlign: "center",
+            padding: "60px 20px",
+            background: "var(--bg-surface)",
+          }}
         >
-          <h3 className="title-md" style={{ marginBottom: "8px" }}>
+          <h3 className="headline-sm" style={{ marginBottom: "8px" }}>
             No Jobs Found
           </h3>
-          <p className="text-sm text-muted" style={{ maxWidth: "460px", margin: "0 auto 20px" }}>
+          <p className="body-sm text-muted" style={{ maxWidth: "460px", margin: "0 auto 20px" }}>
             No jobs match the current criteria in the catalog. Trigger an explicit live SerpApi
             search above to discover new postings.
           </p>
@@ -271,11 +283,11 @@ function JobSearchContent() {
 
       {/* Jobs List */}
       {!loading && jobs.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           {jobs.map((job) => {
             const reqs = job.normalized_requirements_json || [];
             return (
-              <div key={job.id} className="card" style={{ padding: "22px 24px" }}>
+              <div key={job.id} className="card card-interactive" style={{ padding: "22px 24px" }}>
                 <div
                   style={{
                     display: "flex",
@@ -293,7 +305,7 @@ function JobSearchContent() {
                         marginBottom: "6px",
                       }}
                     >
-                      <h2 className="title-md" style={{ fontSize: "1.1rem" }}>
+                      <h2 className="headline-sm" style={{ fontSize: "1.1rem" }}>
                         {job.title}
                       </h2>
                       {job.remote_type && (
@@ -305,18 +317,18 @@ function JobSearchContent() {
                     </div>
 
                     <div
+                      className="body-sm"
                       style={{
-                        fontSize: "0.9rem",
-                        color: "var(--text-muted)",
+                        color: "var(--ink-secondary)",
                         marginBottom: "12px",
                       }}
                     >
-                      <strong style={{ color: "var(--text-main)" }}>
+                      <strong style={{ color: "var(--ink-primary)" }}>
                         {job.company_name || "Company"}
                       </strong>{" "}
                       • {job.location || "Anywhere"}
                       {job.salary_min && (
-                        <span>
+                        <span style={{ fontFamily: "var(--font-mono)" }}>
                           {" "}
                           • {job.currency || "$"}
                           {job.salary_min.toLocaleString()}
@@ -326,13 +338,14 @@ function JobSearchContent() {
                     </div>
 
                     <p
-                      className="text-sm text-muted"
+                      className="body-sm"
                       style={{
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden",
                         marginBottom: "14px",
+                        color: "var(--ink-secondary)",
                       }}
                     >
                       {job.description}
@@ -346,18 +359,19 @@ function JobSearchContent() {
                             key={idx}
                             style={{
                               padding: "2px 8px",
-                              borderRadius: "4px",
-                              background: "var(--bg-subtle)",
-                              border: "1px solid var(--border-color)",
-                              fontSize: "0.75rem",
-                              color: "var(--text-muted)",
+                              borderRadius: "var(--radius-sm)",
+                              background: "var(--bg-canvas)",
+                              border: "1px solid var(--border-hairline)",
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "0.6875rem",
+                              color: "var(--ink-secondary)",
                             }}
                           >
                             {req}
                           </span>
                         ))}
                         {reqs.length > 6 && (
-                          <span className="text-xs text-dim" style={{ alignSelf: "center" }}>
+                          <span className="telemetry-xs text-muted" style={{ alignSelf: "center" }}>
                             +{reqs.length - 6} more
                           </span>
                         )}
@@ -369,7 +383,7 @@ function JobSearchContent() {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "10px",
+                      gap: "8px",
                       minWidth: "150px",
                     }}
                   >
@@ -378,7 +392,7 @@ function JobSearchContent() {
                       className="btn btn-primary"
                       style={{ width: "100%", textAlign: "center" }}
                     >
-                      Inspect & Match
+                      Inspect & Match →
                     </Link>
 
                     {job.canonical_url && (

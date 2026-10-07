@@ -103,59 +103,81 @@ export default function TailorJobPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "24px",
+          marginBottom: "20px",
         }}
       >
-        <Link href={`/jobs/${jobId}`} className="text-sm text-muted">
+        <Link href={`/jobs/${jobId}`} className="body-sm text-muted">
           ← Back to Job Detail
         </Link>
-        <span className="badge badge-blue">Intelligent Grounded Tailoring</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span className="telemetry-xs text-muted">GROUNDING PROTOCOL</span>
+          <span className="badge badge-blue">Truthful Tailoring Engine</span>
+        </div>
       </div>
 
-      {/* Target Job Summary */}
-      <div className="card" style={{ marginBottom: "28px", padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {/* Target Job Summary & Relationship banner */}
+      <div className="card" style={{ marginBottom: "28px", padding: "22px 26px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "16px",
+          }}
+        >
           <div>
-            <h1 className="title-md" style={{ fontSize: "1.25rem", marginBottom: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+              <span className="telemetry-xs badge badge-gray">TRANSFORMATION PIPELINE</span>
+              <span className="telemetry-xs text-muted">Master Resume → Job-Specific Version</span>
+            </div>
+            <h1 className="headline-md" style={{ marginBottom: "4px" }}>
               Tailoring Materials for {job?.title || "Target Opportunity"}
             </h1>
-            <p className="text-xs text-muted">
+            <p className="body-sm text-muted">
               Target Company:{" "}
-              <strong style={{ color: "var(--text-main)" }}>
+              <strong style={{ color: "var(--ink-primary)" }}>
                 {job?.company_name || "Company"}
               </strong>{" "}
               • {job?.location || "Remote"}
             </p>
           </div>
 
-          <button
-            onClick={handleCreateApplication}
-            disabled={savingApp || !tailorResult}
-            className="btn btn-primary"
-            style={{ padding: "10px 22px" }}
-          >
-            {savingApp ? "Saving Application..." : "Save Application to Capsule →"}
-          </button>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <a
+              href="/fixtures/workday.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary"
+              title="Open controlled Workday application fixture in a new tab for the Chrome Extension"
+            >
+              Open Application Portal ↗
+            </a>
+            <button
+              onClick={handleCreateApplication}
+              disabled={savingApp || !tailorResult}
+              className="btn btn-primary"
+            >
+              {savingApp ? "Saving Application..." : "Save Application to Capsule →"}
+            </button>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div
-          className="alert-gap"
-          style={{ marginBottom: "24px", background: "var(--danger-bg)", color: "#f87171" }}
-        >
+        <div className="alert-danger" style={{ marginBottom: "24px" }}>
           <strong>Tailoring Error:</strong> {error}
         </div>
       )}
 
       {generating && (
         <div className="card" style={{ textAlign: "center", padding: "60px 20px" }}>
-          <h2 className="title-md" style={{ marginBottom: "10px" }}>
+          <h2 className="headline-md" style={{ marginBottom: "10px" }}>
             Tailoring Truthful Application Materials...
           </h2>
-          <p className="text-sm text-muted" style={{ maxWidth: "500px", margin: "0 auto" }}>
-            The Match Engine is cross-referencing your master resume and verified GitHub evidence
-            against the target job requirements without inventing unbacked claims.
+          <p className="body-sm text-muted" style={{ maxWidth: "520px", margin: "0 auto" }}>
+            The Match Engine is cross-referencing your master resume and verified career evidence
+            against target job requirements without inventing unbacked claims.
           </p>
         </div>
       )}
@@ -165,18 +187,18 @@ export default function TailorJobPage() {
           {/* Main Column: Tailored Documents */}
           <div>
             {/* Tab Controls */}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+            <div className="tabs-header">
               <button
                 onClick={() => setActiveTab("resume")}
-                className={`btn ${activeTab === "resume" ? "btn-primary" : "btn-secondary"} btn-sm`}
+                className={`tab-btn ${activeTab === "resume" ? "active" : ""}`}
               >
-                Tailored Resume
+                Tailored Resume ({tailorResult.tailored_resume.version_label})
               </button>
               <button
                 onClick={() => setActiveTab("cover_letter")}
-                className={`btn ${activeTab === "cover_letter" ? "btn-primary" : "btn-secondary"} btn-sm`}
+                className={`tab-btn ${activeTab === "cover_letter" ? "active" : ""}`}
               >
-                Tailored Cover Letter
+                Tailored Cover Letter (v{tailorResult.cover_letter.version})
               </button>
             </div>
 
@@ -184,12 +206,12 @@ export default function TailorJobPage() {
             <div className="card">
               <div className="card-header">
                 <div>
-                  <h3 className="title-md">
+                  <h3 className="headline-sm">
                     {activeTab === "resume"
                       ? tailorResult.tailored_resume.version_label
                       : `Tailored Cover Letter (v${tailorResult.cover_letter.version})`}
                   </h3>
-                  <p className="text-xs text-muted">
+                  <p className="body-sm text-muted">
                     {activeTab === "resume"
                       ? "Grounded variant • Canonical master resume preserved unmodified"
                       : "Company-aligned letter backed strictly by verified experiences"}
@@ -223,10 +245,12 @@ export default function TailorJobPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {/* Explainable Changes */}
             <div className="card">
-              <h3 className="title-md" style={{ marginBottom: "12px", fontSize: "1rem" }}>
+              <h3 className="headline-sm" style={{ marginBottom: "12px", fontSize: "1rem" }}>
                 Why This Content Was Prioritized
               </h3>
-              <ul style={{ paddingLeft: "18px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              <ul
+                style={{ paddingLeft: "18px", fontSize: "0.85rem", color: "var(--ink-secondary)" }}
+              >
                 {tailorResult.changes_explanation.map((exp, i) => (
                   <li key={i} style={{ marginBottom: "6px" }}>
                     {exp}
@@ -237,7 +261,7 @@ export default function TailorJobPage() {
 
             {/* Evidence Cited */}
             <div className="card">
-              <h3 className="title-md" style={{ marginBottom: "12px", fontSize: "1rem" }}>
+              <h3 className="headline-sm" style={{ marginBottom: "12px", fontSize: "1rem" }}>
                 Verified Evidence Cited
               </h3>
               {tailorResult.evidence_used.length > 0 ? (
@@ -245,19 +269,36 @@ export default function TailorJobPage() {
                   {tailorResult.evidence_used.map((ev, i) => (
                     <div key={i} className="evidence-item" style={{ padding: "8px 12px" }}>
                       <div>
-                        <div style={{ fontWeight: "600", fontSize: "0.8rem" }}>
-                          {ev.title || "Career Evidence"}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            marginBottom: "2px",
+                          }}
+                        >
+                          <span className="verified-evidence-badge">
+                            ✓ {ev.verification_state || "verified"}
+                          </span>
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.8rem",
+                              color: "var(--ink-primary)",
+                            }}
+                          >
+                            {ev.title || "Career Evidence"}
+                          </span>
                         </div>
-                        <div className="text-xs text-dim">
-                          Source: {ev.source_type || "github"} • Status:{" "}
-                          {ev.verification_state || "verified"}
+                        <div className="telemetry-xs text-muted">
+                          Source: {ev.source_type || "github"}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-muted">No external evidence citations needed.</p>
+                <p className="body-sm text-muted">No external evidence citations needed.</p>
               )}
             </div>
 
@@ -265,15 +306,19 @@ export default function TailorJobPage() {
             {tailorResult.warnings.length > 0 && (
               <div className="card">
                 <h3
-                  className="title-md"
-                  style={{ marginBottom: "12px", fontSize: "1rem", color: "#fbbf24" }}
+                  className="headline-sm"
+                  style={{
+                    marginBottom: "12px",
+                    fontSize: "1rem",
+                    color: "var(--fit-moderate-text)",
+                  }}
                 >
-                  Identified Gaps (Not Fabricated)
+                  Identified Gaps (Never Fabricated)
                 </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {tailorResult.warnings.map((warn, i) => (
                     <div key={i} className="alert-gap" style={{ padding: "8px 10px" }}>
-                      <span style={{ fontSize: "0.8rem" }}>{warn}</span>
+                      <span className="body-sm">{warn}</span>
                     </div>
                   ))}
                 </div>
@@ -281,11 +326,18 @@ export default function TailorJobPage() {
             )}
 
             {/* Primary Capsule Action */}
-            <div className="card" style={{ background: "var(--bg-subtle)", textAlign: "center" }}>
-              <h4 className="title-md" style={{ fontSize: "0.95rem", marginBottom: "6px" }}>
+            <div
+              className="card"
+              style={{
+                background: "var(--bg-canvas)",
+                textAlign: "center",
+                border: "1px solid var(--border-hairline)",
+              }}
+            >
+              <h4 className="headline-sm" style={{ fontSize: "0.95rem", marginBottom: "6px" }}>
                 Preserve in Application Memory
               </h4>
-              <p className="text-xs text-muted" style={{ marginBottom: "14px" }}>
+              <p className="body-sm text-muted" style={{ marginBottom: "14px" }}>
                 Freeze this exact JD, tailored resume, and cover letter into an immutable
                 Application Capsule.
               </p>
@@ -295,7 +347,7 @@ export default function TailorJobPage() {
                 className="btn btn-primary"
                 style={{ width: "100%" }}
               >
-                {savingApp ? "Capturing..." : "Create Application Capsule"}
+                {savingApp ? "Capturing..." : "Create Application Capsule →"}
               </button>
             </div>
           </div>

@@ -44,46 +44,55 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container" style={{ paddingTop: "40px" }}>
+    <div className="container" style={{ paddingTop: "44px" }}>
       {/* Hero Header */}
-      <div style={{ marginBottom: "36px" }}>
+      <div style={{ marginBottom: "36px", maxWidth: "880px" }}>
         <div
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
-            marginBottom: "12px",
+            marginBottom: "16px",
           }}
         >
-          <img
-            src="/jovo-logo-32.png"
-            alt="Jovo"
-            width={22}
-            height={22}
-            style={{ borderRadius: "5px" }}
-          />
-          <span className="badge badge-blue">Jovo Career Operating System</span>
+          <span className="badge badge-gray" style={{ fontFamily: "var(--font-mono)" }}>
+            APPLICATION MEMORY OPERATING SYSTEM
+          </span>
         </div>
-        <h1 className="title-xl" style={{ fontSize: "2.6rem", marginBottom: "10px" }}>
-          Apply smarter. Get hired faster.
+        <h1 className="display-lg" style={{ marginBottom: "14px" }}>
+          Find the right job. Understand your fit. Apply with confidence. Remember everything.
         </h1>
-        <p className="text-muted" style={{ maxWidth: "680px", fontSize: "1.05rem" }}>
-          Discover real jobs with SerpApi, calculate explainable evidence-grounded matches, tailor
-          truthful application materials, and preserve exact submission memory in your Application
-          Capsule.
+        <p className="body-lg" style={{ color: "var(--ink-secondary)", maxWidth: "760px" }}>
+          Jovo transforms the job search into an editorial engineering console. Discover real jobs,
+          inspect explainable evidence-grounded matches, tailor truthful materials, and freeze your
+          exact submissions in permanent Application Capsules.
         </p>
       </div>
 
-      {/* Primary Search Launcher Card */}
-      <div className="card" style={{ marginBottom: "36px", padding: "28px" }}>
-        <h2 className="title-md" style={{ marginBottom: "16px" }}>
-          Start Job Discovery
-        </h2>
+      {/* Primary Action: Job Discovery Search Console */}
+      <div className="card" style={{ marginBottom: "40px", padding: "28px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "18px",
+          }}
+        >
+          <div>
+            <h2 className="headline-sm">Discover Opportunities</h2>
+            <p className="body-sm">
+              Query Google Jobs via SerpApi or filter your verified local catalog.
+            </p>
+          </div>
+          <span className="telemetry-xs text-muted">EXPLICIT SEARCH ONLY</span>
+        </div>
+
         <form
           onSubmit={handleSearchSubmit}
           style={{
             display: "grid",
-            gridTemplateColumns: "1.5fr 1fr auto auto",
+            gridTemplateColumns: "1.4fr 1fr auto auto",
             gap: "14px",
             alignItems: "flex-end",
           }}
@@ -122,257 +131,307 @@ export default function HomePage() {
               id="remote-check"
               checked={remoteOnly}
               onChange={(e) => setRemoteOnly(e.target.checked)}
-              style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              style={{
+                width: "16px",
+                height: "16px",
+                cursor: "pointer",
+                accentColor: "var(--ink-primary)",
+              }}
             />
-            <label htmlFor="remote-check" className="text-sm" style={{ cursor: "pointer" }}>
+            <label
+              htmlFor="remote-check"
+              className="label-md"
+              style={{ cursor: "pointer", userSelect: "none" }}
+            >
               Remote Only
             </label>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ padding: "10px 24px" }}>
-            Search Opportunities
+          <button type="submit" className="btn btn-primary btn-lg">
+            Search Opportunities →
           </button>
         </form>
       </div>
 
-      {/* Overview Stats */}
-      <div className="grid-3" style={{ marginBottom: "36px" }}>
-        <div className="card" style={{ padding: "20px" }}>
-          <div className="text-xs text-muted" style={{ textTransform: "uppercase" }}>
-            Discovered Catalog
-          </div>
-          <div style={{ fontSize: "1.8rem", fontWeight: "700", marginTop: "4px" }}>
-            {recentJobs.length} Jobs
-          </div>
-          <div className="text-xs text-dim" style={{ marginTop: "4px" }}>
-            Persisted from live discovery
-          </div>
+      {/* Core Product Journey (Editorial 6-Step Architecture replacing generic feature grid) */}
+      <div style={{ marginBottom: "44px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <h2 className="headline-sm">The Jovo Operating Architecture</h2>
+          <span className="telemetry-xs text-muted">END-TO-END PIPELINE</span>
         </div>
 
-        <div className="card" style={{ padding: "20px" }}>
-          <div className="text-xs text-muted" style={{ textTransform: "uppercase" }}>
-            Application Memory
-          </div>
-          <div style={{ fontSize: "1.8rem", fontWeight: "700", marginTop: "4px" }}>
-            {applications.length} Capsules
-          </div>
-          <div className="text-xs text-dim" style={{ marginTop: "4px" }}>
-            Exact materials preserved
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: "20px" }}>
-          <div className="text-xs text-muted" style={{ textTransform: "uppercase" }}>
-            Career Evidence
-          </div>
-          <div style={{ fontSize: "1.8rem", fontWeight: "700", marginTop: "4px" }}>Verified</div>
-          <div className="text-xs text-dim" style={{ marginTop: "4px" }}>
-            Grounding candidate claims
-          </div>
-        </div>
-      </div>
-
-      {/* Jovo Suite - Product Surfaces */}
-      <div style={{ marginBottom: "36px" }}>
-        <h2 className="title-md" style={{ marginBottom: "16px" }}>
-          Jovo Product Surfaces
-        </h2>
-        <div className="grid-3" style={{ gap: "14px" }}>
-          <div className="card" style={{ padding: "18px" }}>
-            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
-              Jovo Search
-            </div>
-            <div className="text-sm text-muted">
-              Discover verified live opportunities powered by SerpApi Google Jobs.
-            </div>
-          </div>
-          <div className="card" style={{ padding: "18px" }}>
-            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
-              Jovo Apply
-            </div>
-            <div className="text-sm text-muted">
-              AI-assisted applications with evidence-grounded tailoring and safe autofill.
-            </div>
-          </div>
-          <div className="card" style={{ padding: "18px" }}>
-            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
-              Jovo Track
-            </div>
-            <div className="text-sm text-muted">
-              Application Capsule preserving exact JD, resume, cover letter & approved Q&A.
-            </div>
-          </div>
-          <div className="card" style={{ padding: "18px" }}>
-            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
-              Jovo Follow-up
-            </div>
-            <div className="text-sm text-muted">
-              Actionable reminders, lifecycle tracking, and post-submission interview steps.
-            </div>
-          </div>
-          <div className="card" style={{ padding: "18px" }}>
+        <div className="grid-3" style={{ gap: "16px" }}>
+          <div className="card" style={{ padding: "20px" }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "4px",
+                marginBottom: "8px",
               }}
             >
-              <span style={{ fontWeight: "700", color: "var(--accent-blue)" }}>Jovo Copilot</span>
-              <span className="badge badge-amber" style={{ fontSize: "0.65rem" }}>
-                Roadmap
-              </span>
+              <span className="telemetry-xs text-muted">01 / DISCOVERY</span>
+              <span className="badge badge-gray">SerpApi</span>
             </div>
-            <div className="text-sm text-muted">
-              Planned conversational career AI assistant for deep strategy and interactive coaching.
+            <div className="headline-sm" style={{ fontSize: "1rem", marginBottom: "6px" }}>
+              Job Discovery
             </div>
+            <p className="body-sm">
+              Explicit, live search against Google Jobs normalized into deduplicated catalog records
+              with full provenance.
+            </p>
           </div>
-          <div className="card" style={{ padding: "18px" }}>
-            <div style={{ fontWeight: "700", color: "var(--accent-blue)", marginBottom: "4px" }}>
-              Jovo Extension
+
+          <div className="card" style={{ padding: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <span className="telemetry-xs text-muted">02 / INTELLIGENCE</span>
+              <span className="badge badge-teal">Evidence</span>
             </div>
-            <div className="text-sm text-muted">
-              Chrome MV3 extension for Workday and generic ATS application assistance.
+            <div className="headline-sm" style={{ fontSize: "1rem", marginBottom: "6px" }}>
+              Explainable Match
             </div>
+            <p className="body-sm">
+              Algorithmic fit decomposition showing exact supporting candidate evidence, skill
+              overlaps, and verified gaps.
+            </p>
+          </div>
+
+          <div className="card" style={{ padding: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <span className="telemetry-xs text-muted">03 / TAILORING</span>
+              <span className="badge badge-blue">Truthful</span>
+            </div>
+            <div className="headline-sm" style={{ fontSize: "1rem", marginBottom: "6px" }}>
+              Versioned Materials
+            </div>
+            <p className="body-sm">
+              Master-protected resume and cover letter tailoring strictly grounded in verified
+              profile facts—no hallucination.
+            </p>
+          </div>
+
+          <div className="card" style={{ padding: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <span className="telemetry-xs text-muted">04 / ASSISTANCE</span>
+              <span className="badge badge-gray">Chrome MV3</span>
+            </div>
+            <div className="headline-sm" style={{ fontSize: "1rem", marginBottom: "6px" }}>
+              Assisted Apply
+            </div>
+            <p className="body-sm">
+              Conservative extension detecting Workday and generic ATS forms with safe autofill and
+              explicit candidate review.
+            </p>
+          </div>
+
+          <div
+            className="card"
+            style={{
+              padding: "20px",
+              border: "1px solid var(--ink-primary)",
+              background: "#ffffff",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <span
+                className="telemetry-xs"
+                style={{ color: "var(--ink-primary)", fontWeight: 700 }}
+              >
+                05 / MEMORY
+              </span>
+              <span className="badge badge-green">Core Moat</span>
+            </div>
+            <div className="headline-sm" style={{ fontSize: "1rem", marginBottom: "6px" }}>
+              Application Capsule
+            </div>
+            <p className="body-sm">
+              Freezes the exact job description snapshot, submitted resume, cover letter, and
+              approved Q&A forever.
+            </p>
+          </div>
+
+          <div className="card" style={{ padding: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <span className="telemetry-xs text-muted">06 / INTERVIEW</span>
+              <span className="badge badge-amber">Prep</span>
+            </div>
+            <div className="headline-sm" style={{ fontSize: "1rem", marginBottom: "6px" }}>
+              Targeted Preparation
+            </div>
+            <p className="body-sm">
+              Technical and behavioral interview drills generated directly from the frozen materials
+              you actually submitted.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="grid-2">
-        {/* Recent Applications Section */}
+      {/* Two-Column Operational Summary (Real Data) */}
+      <div className="grid-2" style={{ marginBottom: "40px" }}>
+        {/* Recent Application Capsules */}
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="title-md">Application Capsules</h3>
-              <p className="text-xs text-muted">Permanent records of what you submitted</p>
+              <h3 className="headline-sm">Application Capsules</h3>
+              <p className="body-sm">Permanent memory of your submitted applications</p>
             </div>
             <Link href="/applications" className="btn btn-outline btn-sm">
-              View All
+              View All ({applications.length}) →
             </Link>
           </div>
 
           {loading ? (
-            <div className="text-sm text-muted" style={{ padding: "20px 0" }}>
-              Loading applications...
-            </div>
+            <p className="body-sm text-muted">Loading Application Capsules...</p>
           ) : applications.length === 0 ? (
             <div
               style={{
-                padding: "30px 20px",
-                textAlign: "center",
-                background: "var(--bg-subtle)",
+                padding: "24px",
+                background: "var(--bg-canvas)",
                 borderRadius: "var(--radius-sm)",
+                textAlign: "center",
+                border: "1px dashed var(--border-hairline)",
               }}
             >
-              <p className="text-sm text-muted" style={{ marginBottom: "12px" }}>
-                No applications captured yet.
+              <p className="body-sm text-muted" style={{ marginBottom: "12px" }}>
+                No applications preserved yet.
               </p>
-              <Link href="/jobs" className="btn btn-secondary btn-sm">
-                Discover & Tailor a Job
+              <Link href="/jobs" className="btn btn-primary btn-sm">
+                Discover & Tailor Your First Job
               </Link>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {applications.slice(0, 3).map((app) => (
-                <div
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {applications.slice(0, 4).map((app) => (
+                <Link
                   key={app.id}
+                  href={`/applications/${app.id}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "12px 16px",
-                    background: "var(--bg-subtle)",
+                    padding: "12px 14px",
+                    background: "var(--bg-canvas)",
+                    border: "1px solid var(--border-hairline)",
                     borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border-color)",
+                    transition: "border-color 0.15s ease",
                   }}
+                  className="card-interactive"
                 >
                   <div>
-                    <div style={{ fontWeight: "600", fontSize: "0.95rem" }}>{app.target_role}</div>
-                    <div className="text-xs text-muted">
+                    <div style={{ fontWeight: 600, color: "var(--ink-primary)" }}>
+                      {app.target_role}
+                    </div>
+                    <div className="body-sm text-muted">
                       {app.target_company} • Applied:{" "}
-                      {app.applied_at ? new Date(app.applied_at).toLocaleDateString() : "Saved"}
+                      {app.applied_at ? new Date(app.applied_at).toLocaleDateString() : "Draft"}
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span className="badge badge-amber">{app.status}</span>
-                    <Link href={`/applications/${app.id}`} className="btn btn-secondary btn-sm">
-                      Capsule
-                    </Link>
-                  </div>
-                </div>
+                  <span className="badge badge-gray">{app.status}</span>
+                </Link>
               ))}
             </div>
           )}
         </div>
 
-        {/* Recently Ingested Jobs */}
+        {/* Recently Discovered Jobs Catalog */}
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="title-md">Recently Discovered Jobs</h3>
-              <p className="text-xs text-muted">Ready for match analysis and tailoring</p>
+              <h3 className="headline-sm">Discovered Catalog</h3>
+              <p className="body-sm">Verified opportunities in your catalog</p>
             </div>
             <Link href="/jobs" className="btn btn-outline btn-sm">
-              Explore All
+              Catalog ({recentJobs.length}) →
             </Link>
           </div>
 
           {loading ? (
-            <div className="text-sm text-muted" style={{ padding: "20px 0" }}>
-              Loading catalog...
-            </div>
+            <p className="body-sm text-muted">Loading jobs catalog...</p>
           ) : recentJobs.length === 0 ? (
             <div
               style={{
-                padding: "30px 20px",
-                textAlign: "center",
-                background: "var(--bg-subtle)",
+                padding: "24px",
+                background: "var(--bg-canvas)",
                 borderRadius: "var(--radius-sm)",
+                textAlign: "center",
+                border: "1px dashed var(--border-hairline)",
               }}
             >
-              <p className="text-sm text-muted" style={{ marginBottom: "12px" }}>
+              <p className="body-sm text-muted" style={{ marginBottom: "12px" }}>
                 Catalog is currently empty.
               </p>
               <Link href="/jobs" className="btn btn-primary btn-sm">
-                Run First SerpApi Discovery
+                Discover Jobs
               </Link>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {recentJobs.slice(0, 3).map((job) => (
-                <div
-                  key={job.id}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {recentJobs.slice(0, 4).map((j) => (
+                <Link
+                  key={j.id}
+                  href={`/jobs/${j.id}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "12px 16px",
-                    background: "var(--bg-subtle)",
+                    padding: "12px 14px",
+                    background: "var(--bg-canvas)",
+                    border: "1px solid var(--border-hairline)",
                     borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border-color)",
+                    transition: "border-color 0.15s ease",
                   }}
+                  className="card-interactive"
                 >
-                  <div style={{ maxWidth: "70%" }}>
-                    <div
-                      style={{
-                        fontWeight: "600",
-                        fontSize: "0.95rem",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {job.title}
-                    </div>
-                    <div className="text-xs text-muted">
-                      {job.company_name || "Company"} • {job.location || "Anywhere"}
+                  <div>
+                    <div style={{ fontWeight: 600, color: "var(--ink-primary)" }}>{j.title}</div>
+                    <div className="body-sm text-muted">
+                      {j.company_name} • {j.location || "Anywhere"}
                     </div>
                   </div>
-                  <Link href={`/jobs/${job.id}`} className="btn btn-primary btn-sm">
-                    Inspect
-                  </Link>
-                </div>
+                  {j.remote_type && <span className="badge badge-green">{j.remote_type}</span>}
+                </Link>
               ))}
             </div>
           )}

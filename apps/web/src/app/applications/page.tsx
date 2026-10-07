@@ -40,7 +40,7 @@ export default function ApplicationsListPage() {
   ];
 
   return (
-    <div className="container" style={{ paddingTop: "32px" }}>
+    <div className="container" style={{ paddingTop: "36px" }}>
       {/* Header */}
       <div
         style={{
@@ -51,13 +51,13 @@ export default function ApplicationsListPage() {
         }}
       >
         <div>
-          <div style={{ display: "inline-block", marginBottom: "6px" }}>
-            <span className="badge badge-amber">Application Memory Directory</span>
+          <div style={{ display: "inline-block", marginBottom: "8px" }}>
+            <span className="telemetry-xs badge badge-gray">IMMUTABLE MEMORY DIRECTORY</span>
           </div>
-          <h1 className="title-lg" style={{ marginBottom: "6px" }}>
+          <h1 className="headline-lg" style={{ marginBottom: "6px" }}>
             Tracked Application Capsules
           </h1>
-          <p className="text-sm text-muted">
+          <p className="body-md text-muted">
             Access the immutable snapshots, tailored resumes, and cover letters submitted for each
             job.
           </p>
@@ -92,10 +92,7 @@ export default function ApplicationsListPage() {
 
       {/* Error state */}
       {error && (
-        <div
-          className="alert-gap"
-          style={{ marginBottom: "24px", background: "var(--danger-bg)", color: "#f87171" }}
-        >
+        <div className="alert-danger" style={{ marginBottom: "24px" }}>
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -103,10 +100,10 @@ export default function ApplicationsListPage() {
       {/* Loading state */}
       {loading && (
         <div style={{ textAlign: "center", padding: "60px 0" }}>
-          <h3 className="title-md" style={{ marginBottom: "6px" }}>
+          <h3 className="headline-sm" style={{ marginBottom: "6px" }}>
             Loading Application Memory...
           </h3>
-          <p className="text-sm text-muted">Reading persistent database records.</p>
+          <p className="body-sm text-muted">Reading persistent database records.</p>
         </div>
       )}
 
@@ -114,29 +111,33 @@ export default function ApplicationsListPage() {
       {!loading && applications.length === 0 && (
         <div
           className="card"
-          style={{ textAlign: "center", padding: "60px 20px", background: "var(--bg-subtle)" }}
+          style={{
+            textAlign: "center",
+            padding: "60px 20px",
+            background: "var(--bg-surface)",
+          }}
         >
-          <h3 className="title-md" style={{ marginBottom: "8px" }}>
+          <h3 className="headline-sm" style={{ marginBottom: "8px" }}>
             No Application Capsules Found
           </h3>
-          <p className="text-sm text-muted" style={{ maxWidth: "450px", margin: "0 auto 20px" }}>
+          <p className="body-sm text-muted" style={{ maxWidth: "450px", margin: "0 auto 20px" }}>
             {statusFilter === "all"
               ? "You haven't preserved any application materials yet. Discover a job, tailor your materials, and freeze your first Application Capsule."
               : `No applications currently in '${statusFilter}' status.`}
           </p>
           <Link href="/jobs" className="btn btn-primary">
-            Explore Job Discovery
+            Explore Job Discovery →
           </Link>
         </div>
       )}
 
-      {/* Applications Grid */}
+      {/* Applications List */}
       {!loading && applications.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {applications.map((app) => (
             <div
               key={app.id}
-              className="card"
+              className="card card-interactive"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -153,7 +154,7 @@ export default function ApplicationsListPage() {
                     marginBottom: "4px",
                   }}
                 >
-                  <h2 className="title-md" style={{ fontSize: "1.1rem" }}>
+                  <h2 className="headline-sm" style={{ fontSize: "1.1rem" }}>
                     {app.target_role}
                   </h2>
                   <span
@@ -169,12 +170,14 @@ export default function ApplicationsListPage() {
                   </span>
                 </div>
 
-                <div className="text-sm text-muted">
-                  <strong style={{ color: "var(--text-main)" }}>{app.target_company}</strong> •
+                <div className="body-sm" style={{ color: "var(--ink-secondary)" }}>
+                  <strong style={{ color: "var(--ink-primary)" }}>{app.target_company}</strong> •
                   Applied:{" "}
-                  {app.applied_at
-                    ? new Date(app.applied_at).toLocaleDateString()
-                    : new Date(app.created_at).toLocaleDateString()}
+                  <span style={{ fontFamily: "var(--font-mono)" }}>
+                    {app.applied_at
+                      ? new Date(app.applied_at).toLocaleDateString()
+                      : new Date(app.created_at).toLocaleDateString()}
+                  </span>
                   {app.source && ` • Source: ${app.source}`}
                 </div>
               </div>
