@@ -181,7 +181,7 @@ class SerpApiNormalizer:
             source_urls=source_urls,
             source_names=source_names,
             canonical_url=canonical_url,
-            external_id=item.job_id,
+            external_id=item.job_id[:255] if item.job_id else None,
             posted_at=None,
             fingerprint=fingerprint,
             provenance=provenance,

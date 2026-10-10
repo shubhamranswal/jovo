@@ -297,11 +297,15 @@ alembic upgrade head
 uvicorn apps.api.main:app --reload --port 8000
 ```
 
+When `DEMO_MODE=true` (the default in `.env.example`), the server automatically initializes the **Demo Workspace** on startup. No account creation or login is needed.
+
 **Web Application:**
 
 ```bash
 npm --workspace=@jobos/web run dev
 ```
+
+Visit [http://localhost:3000](http://localhost:3000) to access the Jovo console immediately.
 
 **Build Chrome Extension:**
 
@@ -317,18 +321,51 @@ Load the unpacked extension in Chrome:
 
 ---
 
+## Demo Workspace & Ground Truth Candidate
+
+When running in demo mode (`DEMO_MODE=true`), Jovo is immediately usable without signup:
+
+- **Seeded Candidate**: Grounded strictly in the authoritative resume of **Shubham Singh Ranswal** (Software Engineer II at Thales, cryptography/HSM, payShield 10K, TR-31 key blocks, MultiLMK Go utility, LogChat offline AI log platform, KeyVault Lite, DevLens, CDSP/DSF certifications).
+- **Seeded Demo Openings**: Realistic, clearly-labeled demo jobs (`DEMO FIXTURE`) matching the candidate's technical profile.
+- **Historical Application Capsules**: Pre-seeded capsules demonstrating the complete lifecycle (`Offer`, `Interviewing`, `Applied`, `Rejected`, and `Saved`).
+- **Controlled Application Workflow**: When applying to a job in demo mode, Jovo simulates the ATS submission in a controlled environment ("Demo submission • Not sent to employer") requiring explicit candidate confirmation before freezing the capsule and transitioning to `Applied`.
+- **Repeatability & Reset**: The workspace is completely idempotent. To reset back to the pristine initial demo state:
+  ```bash
+  python scripts/reset_demo_workspace.py
+  ```
+  Or call `POST /api/v1/demo/reset`.
+
+---
+
+## SerpApi Discovery & Server-Side Failover
+
+Jovo Search utilizes the official SerpApi Google Jobs engine for live opportunity discovery:
+
+1. **Primary & Fallback API Keys**:
+   - `SERPAPI_API_KEY`: Primary key used for live searches.
+   - `SERPAPI_FALLBACK_API_KEY`: Secondary key for automated server-side failover.
+2. **Intelligent Failover Policy**:
+   - Failover is triggered _only_ upon quota exhaustion, rate limiting (HTTP 429), or authentication errors (HTTP 401/403).
+   - Generic network timeouts or client validation errors do _not_ blindly switch keys.
+   - Neither key is ever exposed to the client browser or logged in plaintext.
+3. **Explicit Discovery**: To preserve your SerpApi search quota, browsing the catalog or filtering locally operates offline without consuming API quota. Live searches are triggered only when explicitly clicking **Live SerpApi Discovery**.
+
+---
+
 ## Environment Variables
 
 See [`.env.example`](.env.example) for the complete reference:
 
-| Variable                | Description                                       | Default                       |
-| :---------------------- | :------------------------------------------------ | :---------------------------- |
-| `DATABASE_URL`          | PostgreSQL connection string                      | `postgresql://...`            |
-| `SERPAPI_API_KEY`       | SerpApi API key for live Google Jobs discovery    | Required for search           |
-| `GEMINI_API_KEY`        | Gemini API key for evidence-grounded AI tailoring | Optional (falls back to mock) |
-| `LLM_MODEL`             | Gemini model name                                 | `gemini-2.5-flash`            |
-| `API_HOST` / `API_PORT` | FastAPI server host and port                      | `0.0.0.0:8000`                |
-| `NEXT_PUBLIC_API_URL`   | Web frontend target API URL                       | `http://localhost:8000`       |
+| Variable                   | Description                                         | Default                       |
+| :------------------------- | :-------------------------------------------------- | :---------------------------- |
+| `DATABASE_URL`             | PostgreSQL connection string                        | `postgresql://...`            |
+| `DEMO_MODE`                | Enables deterministic first-run candidate & catalog | `true`                        |
+| `SERPAPI_API_KEY`          | Primary SerpApi API key for live Google Jobs search | Required for live search      |
+| `SERPAPI_FALLBACK_API_KEY` | Secondary SerpApi API key for server-side failover  | Optional (for failover)       |
+| `GEMINI_API_KEY`           | Gemini API key for evidence-grounded AI tailoring   | Optional (falls back to mock) |
+| `LLM_MODEL`                | Gemini model name                                   | `gemini-2.5-flash`            |
+| `API_HOST` / `API_PORT`    | FastAPI server host and port                        | `0.0.0.0:8000`                |
+| `NEXT_PUBLIC_API_URL`      | Web frontend target API URL                         | `http://localhost:8000`       |
 
 > 🔒 **Security Notice:** Never commit `.env` or expose API keys. The Chrome extension communicates exclusively with the local backend API and never stores or sees provider keys.
 

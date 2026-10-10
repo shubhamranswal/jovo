@@ -155,7 +155,7 @@ export default function ApplicationsListPage() {
                   }}
                 >
                   <h2 className="headline-sm" style={{ fontSize: "1.1rem" }}>
-                    {app.target_role}
+                    {app.title || app.target_role || "Untitled Role"}
                   </h2>
                   <span
                     className={`badge ${
@@ -163,16 +163,25 @@ export default function ApplicationsListPage() {
                         ? "badge-green"
                         : app.status === "Applied"
                           ? "badge-blue"
-                          : "badge-amber"
+                          : app.status === "Interviewing"
+                            ? "badge-blue"
+                            : app.status === "Rejected"
+                              ? "badge-gray"
+                              : "badge-amber"
                     }`}
                   >
                     {app.status}
                   </span>
+                  {Boolean(app.metadata_json?.is_demo) && (
+                    <span className="badge badge-amber">DEMO CAPSULE</span>
+                  )}
                 </div>
 
                 <div className="body-sm" style={{ color: "var(--ink-secondary)" }}>
-                  <strong style={{ color: "var(--ink-primary)" }}>{app.target_company}</strong> •
-                  Applied:{" "}
+                  <strong style={{ color: "var(--ink-primary)" }}>
+                    {app.company_name || app.target_company || "Organization"}
+                  </strong>{" "}
+                  • Applied:{" "}
                   <span style={{ fontFamily: "var(--font-mono)" }}>
                     {app.applied_at
                       ? new Date(app.applied_at).toLocaleDateString()

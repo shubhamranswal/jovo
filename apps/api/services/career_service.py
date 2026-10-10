@@ -1,4 +1,3 @@
-from datetime import date
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -10,9 +9,7 @@ from apps.api.db.models import (
     CareerExperience,
     CareerProfile,
     CareerProfileSkill,
-    Resume,
     Skill,
-    User,
 )
 from apps.api.integrations.llm import LLMProviderProtocol
 from apps.api.schemas.career import (
@@ -29,133 +26,12 @@ from apps.api.schemas.career import (
 class CareerService:
     @staticmethod
     def get_active_profile(db: Session) -> CareerProfile:
-        """Retrieves or initializes canonical active career profile for MVP demo."""
-        query = select(CareerProfile).options(
-            joinedload(CareerProfile.experiences),
-            joinedload(CareerProfile.skills).joinedload(CareerProfileSkill.skill),
-            joinedload(CareerProfile.evidence),
-            joinedload(CareerProfile.resumes),
-        )
-        profile = db.scalar(query)
-        if profile:
-            return profile
+        """Retrieves or initializes canonical active career profile grounded in
+        Shubham Singh Ranswal's resume.
+        """
+        from apps.api.services.demo_workspace_service import DemoWorkspaceService
 
-        user = db.scalar(select(User))
-        if not user:
-            user = User(
-                email="alex.chen@example.com",
-            )
-            db.add(user)
-            db.flush()
-
-        profile = CareerProfile(
-            user_id=user.id,
-            headline="Senior Backend & Distributed Systems Engineer",
-            summary=(
-                "7+ years architecting high-throughput microservices, scalable distributed queues, "
-                "and robust database schemas in Python, FastAPI, and PostgreSQL."
-            ),
-            location="Remote",
-            preferences_json={
-                "remote": True,
-                "min_salary": 140000,
-                "preferred_roles": [
-                    "Senior Backend Engineer",
-                    "Staff Engineer",
-                    "Distributed Systems Engineer",
-                ],
-            },
-        )
-        db.add(profile)
-        db.flush()
-
-        resume = Resume(
-            career_profile_id=profile.id,
-            name="Alex Chen - Master Engineering Resume",
-            extracted_text=(
-                "Alex Chen\nSenior Backend Engineer\nalex.chen@example.com | Remote\n\n"
-                "SUMMARY\n"
-                "Experienced backend engineer specializing in Python, FastAPI, PostgreSQL, "
-                "and distributed data systems.\n\n"
-                "EXPERIENCE\n"
-                "Senior Software Engineer | CloudScale Inc (2021 - Present)\n"
-                "- Built async Python microservices processing 12k req/s at 99.99% uptime.\n"
-                "- Led database optimization across PostgreSQL cluster, cutting p99 by 40%.\n\n"
-                "Backend Engineer | Nexus Systems (2018 - 2021)\n"
-                "- Designed REST and internal services using FastAPI and Redis.\n"
-                "- Implemented automated CI/CD pipelines and Docker containerization.\n\n"
-                "SKILLS\n"
-                "Python, FastAPI, PostgreSQL, Distributed Systems, Docker, Redis, SQL\n"
-            ),
-            is_master=True,
-            version=1,
-        )
-        db.add(resume)
-
-        exp1 = CareerExperience(
-            career_profile_id=profile.id,
-            organization="CloudScale Inc",
-            title="Senior Software Engineer",
-            start_date=date(2021, 3, 1),
-            end_date=None,
-            description=(
-                "Built async Python microservices processing 12k req/s at 99.99% uptime. "
-                "Led database optimization across PostgreSQL cluster cutting p99 latency by 40%."
-            ),
-            evidence_status="verified",
-        )
-        exp2 = CareerExperience(
-            career_profile_id=profile.id,
-            organization="Nexus Systems",
-            title="Backend Engineer",
-            start_date=date(2018, 6, 1),
-            end_date=date(2021, 2, 28),
-            description=(
-                "Designed REST and internal services using FastAPI and Redis. "
-                "Implemented automated CI/CD pipelines and Docker containerization."
-            ),
-            evidence_status="verified",
-        )
-        db.add(exp1)
-        db.add(exp2)
-
-        ev1 = CareerEvidence(
-            career_profile_id=profile.id,
-            type="github_repo",
-            title="fastapi-distributed-queue",
-            content="High-throughput distributed task queue built with Python, AsyncIO, and Redis.",
-            source_type="github",
-            source_url="https://github.com/alexchen/fastapi-distributed-queue",
-            verification_state="verified",
-        )
-        ev2 = CareerEvidence(
-            career_profile_id=profile.id,
-            type="github_repo",
-            title="pg-query-optimizer",
-            content="PostgreSQL index analysis and slow query visualizer tool with 800+ stars.",
-            source_type="github",
-            source_url="https://github.com/alexchen/pg-query-optimizer",
-            verification_state="verified",
-        )
-        db.add(ev1)
-        db.add(ev2)
-
-        for sk_name in ["python", "fastapi", "postgresql", "docker", "redis"]:
-            skill = db.scalar(select(Skill).where(Skill.normalized_name == sk_name))
-            if not skill:
-                skill = Skill(normalized_name=sk_name)
-                db.add(skill)
-                db.flush()
-            cps = CareerProfileSkill(
-                career_profile_id=profile.id,
-                skill_id=skill.id,
-                proficiency="expert" if sk_name in ["python", "fastapi"] else "advanced",
-            )
-            db.add(cps)
-
-        db.commit()
-        db.refresh(profile)
-        return CareerService.get_profile(db, profile.id)
+        return DemoWorkspaceService.ensure_demo_workspace(db)
 
     @staticmethod
     def get_profile_by_user(db: Session, user_id: UUID) -> CareerProfile:

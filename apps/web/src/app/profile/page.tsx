@@ -88,11 +88,31 @@ export default function CareerProfilePage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* Identity & Summary Card */}
           <div className="card">
-            <h2 className="headline-sm" style={{ fontSize: "1.25rem", marginBottom: "4px" }}>
-              {profile.headline || "Senior Software Engineer"}
-            </h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "12px",
+                marginBottom: "6px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <h2 className="headline-sm" style={{ fontSize: "1.4rem", marginBottom: "2px" }}>
+                  {(profile.preferences_json?.full_name as string) || "Shubham Singh Ranswal"}
+                </h2>
+                <div className="body-md" style={{ color: "var(--accent-action)", fontWeight: 600 }}>
+                  {profile.headline ||
+                    "Software Engineer II - Secure Systems, Cryptography, HSM, Backend & AI Tooling"}
+                </div>
+              </div>
+              <span className="badge badge-blue">Seeded Demo Candidate</span>
+            </div>
             <div className="telemetry-xs text-muted" style={{ marginBottom: "14px" }}>
-              Location: {profile.location || "Remote"} • Profile ID: {profile.id.slice(0, 8)}...
+              Location: {profile.location || "Noida, Uttar Pradesh"} • Email:{" "}
+              {(profile.preferences_json?.email as string) || "shubhamranswal@gmail.com"} • Phone:{" "}
+              {(profile.preferences_json?.phone as string) || "+91 9560793525"}
             </div>
             <p className="body-md" style={{ lineHeight: "1.6", color: "var(--ink-body)" }}>
               {profile.summary || "No executive summary provided."}

@@ -20,6 +20,14 @@ export default function TailorJobPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<"resume" | "cover_letter">("resume");
+  const [showModal, setShowModal] = useState(false);
+  const [q1, setQ1] = useState(
+    "Engineered and customized secure payment workflows on Thales payShield 10K HSM with RSA-protected TR-31 key blocks. Built a multi-threaded Golang automation utility reducing HSM validation time by 50% while guaranteeing PKCS and ISO/ANSI cryptographic compliance."
+  );
+  const [q2, setQ2] = useState(
+    "Designed production FastAPI backend tooling and developed LogChat, an offline-first AI log investigation platform using local LLMs and agentic workflows to preserve sensitive log boundaries. Built KeyVault Lite envelope encryption and DevLens Go CLI architectures."
+  );
+  const [confirmedReview, setConfirmedReview] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -48,8 +56,8 @@ export default function TailorJobPage() {
     init();
   }, [jobId]);
 
-  const handleCreateApplication = async () => {
-    if (!job || !profile || !tailorResult) return;
+  const handleConfirmSubmission = async () => {
+    if (!job || !profile || !tailorResult || !confirmedReview) return;
     setSavingApp(true);
     setError(null);
     try {
@@ -58,10 +66,11 @@ export default function TailorJobPage() {
         user_id: profile.user_id,
         title: job.title,
         company_name: job.company_name || "Company",
-        source: "jobos_serpapi_tailor",
+        source: job.metadata_json?.is_demo ? "Demo Portal" : "Workday",
         application_url: job.canonical_url || undefined,
         status: "Applied",
-        notes: "Tailored and applied via Jovo intelligent tailoring golden path.",
+        notes:
+          "Simulated ATS submission via controlled demo workflow. Candidate verified all answers.",
         initial_snapshot: {
           job_description: job.description,
           page_title: job.title,
@@ -69,6 +78,7 @@ export default function TailorJobPage() {
           extraction_metadata_json: {
             fingerprint: job.fingerprint,
             source: "jobos_snapshot",
+            ats: "Controlled ATS Fixture",
           },
         },
         initial_documents: [
@@ -83,8 +93,38 @@ export default function TailorJobPage() {
             version_label: `Cover Letter v${tailorResult.cover_letter.version}`,
           },
         ],
-        initial_questions: [],
+        initial_questions: [
+          {
+            question_text:
+              "Describe a challenging distributed system or security issue you solved.",
+            question_type: "textarea",
+            order_index: 1,
+            answer: {
+              answer_text: q1,
+              source: "llm_draft",
+              user_approved: true,
+            },
+          },
+          {
+            question_text:
+              "What experience do you have with backend APIs, microservices, and automated testing?",
+            question_type: "textarea",
+            order_index: 2,
+            answer: {
+              answer_text: q2,
+              source: "llm_draft",
+              user_approved: true,
+            },
+          },
+        ],
       });
+
+      // Automatically generate grounded interview preparation
+      try {
+        await api.generateInterviewPrep(app.id, "Technical");
+      } catch {
+        // Non-blocking
+      }
 
       // Navigate to the newly captured Application Capsule!
       router.push(`/applications/${app.id}`);
@@ -154,11 +194,11 @@ export default function TailorJobPage() {
               Open Application Portal ↗
             </a>
             <button
-              onClick={handleCreateApplication}
-              disabled={savingApp || !tailorResult}
+              onClick={() => setShowModal(true)}
+              disabled={generating || !tailorResult}
               className="btn btn-primary"
             >
-              {savingApp ? "Saving Application..." : "Save Application to Capsule →"}
+              Review & Submit Application →
             </button>
           </div>
         </div>
@@ -342,12 +382,265 @@ export default function TailorJobPage() {
                 Application Capsule.
               </p>
               <button
-                onClick={handleCreateApplication}
-                disabled={savingApp}
+                onClick={() => setShowModal(true)}
+                disabled={savingApp || !tailorResult}
                 className="btn btn-primary"
                 style={{ width: "100%" }}
               >
-                {savingApp ? "Capturing..." : "Create Application Capsule →"}
+                Review & Submit Application →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Controlled ATS Application Simulation Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: "760px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              padding: "32px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              border: "1px solid var(--border-hairline)",
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ marginBottom: "20px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className="telemetry-xs badge badge-amber">CONTROLLED ATS SUBMISSION</span>
+                  <span className="telemetry-xs badge badge-gray">DEMO WORKSPACE</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "1.2rem",
+                    cursor: "pointer",
+                    color: "var(--ink-muted)",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <h2 className="headline-md" style={{ marginBottom: "4px" }}>
+                Review Application for {job?.title}
+              </h2>
+              <p className="body-sm text-muted">
+                Target: <strong>{job?.company_name}</strong> • Source:{" "}
+                {job?.metadata_json?.is_demo ? "Demo Catalog Opening" : "Live SerpApi Job Listing"}
+              </p>
+            </div>
+
+            {/* Notice Banner */}
+            <div
+              style={{
+                padding: "12px 16px",
+                background: "#FEF3C7",
+                border: "1px solid #FCD34D",
+                borderRadius: "var(--radius-sm)",
+                marginBottom: "24px",
+                fontSize: "0.85rem",
+                color: "#92400E",
+              }}
+            >
+              <strong>Notice:</strong> This is a controlled demo submission simulation. Jovo will
+              record the exact application context, tailored resume, and approved answers into your
+              immutable Application Capsule. Applications to real external employers are never
+              silently submitted.
+            </div>
+
+            {/* Section 1: Candidate Information */}
+            <div style={{ marginBottom: "20px" }}>
+              <h3 className="headline-sm" style={{ fontSize: "1rem", marginBottom: "10px" }}>
+                1. Candidate Ground Truth
+              </h3>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                  padding: "14px",
+                  background: "var(--bg-canvas)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--border-hairline)",
+                }}
+              >
+                <div>
+                  <div className="telemetry-xs text-muted">Candidate Name</div>
+                  <strong className="body-sm" style={{ color: "var(--ink-primary)" }}>
+                    Shubham Singh Ranswal
+                  </strong>
+                </div>
+                <div>
+                  <div className="telemetry-xs text-muted">Location</div>
+                  <span className="body-sm">Noida, Uttar Pradesh</span>
+                </div>
+                <div>
+                  <div className="telemetry-xs text-muted">Email</div>
+                  <span className="body-sm">shubhamranswal@gmail.com</span>
+                </div>
+                <div>
+                  <div className="telemetry-xs text-muted">Phone</div>
+                  <span className="body-sm">+91 9560793525</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Materials Attached */}
+            <div style={{ marginBottom: "20px" }}>
+              <h3 className="headline-sm" style={{ fontSize: "1rem", marginBottom: "10px" }}>
+                2. Attached Application Materials
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    background: "var(--bg-canvas)",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--border-hairline)",
+                  }}
+                >
+                  <span className="body-sm">📄 {tailorResult?.tailored_resume.version_label}</span>
+                  <span className="telemetry-xs badge badge-green">Tailored & Frozen</span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    background: "var(--bg-canvas)",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--border-hairline)",
+                  }}
+                >
+                  <span className="body-sm">
+                    ✉️ Cover Letter v{tailorResult?.cover_letter.version} ({job?.company_name})
+                  </span>
+                  <span className="telemetry-xs badge badge-green">Grounded in Evidence</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Application Questions */}
+            <div style={{ marginBottom: "24px" }}>
+              <h3 className="headline-sm" style={{ fontSize: "1rem", marginBottom: "10px" }}>
+                3. Application Questions & Grounded Answers
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div>
+                  <label className="label" style={{ marginBottom: "4px" }}>
+                    Q1: Describe a challenging distributed system or security issue you solved.
+                  </label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={q1}
+                    onChange={(e) => setQ1(e.target.value)}
+                    style={{ fontSize: "0.85rem", lineHeight: "1.5" }}
+                  />
+                  <div className="telemetry-xs text-muted" style={{ marginTop: "3px" }}>
+                    Source: Verified Career Evidence • Thales payShield 10K HSM & Golang MultiLMK
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label" style={{ marginBottom: "4px" }}>
+                    Q2: What experience do you have with backend APIs, microservices, and automated
+                    testing?
+                  </label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={q2}
+                    onChange={(e) => setQ2(e.target.value)}
+                    style={{ fontSize: "0.85rem", lineHeight: "1.5" }}
+                  />
+                  <div className="telemetry-xs text-muted" style={{ marginTop: "3px" }}>
+                    Source: Verified Career Evidence • FastAPI, LogChat, and DevLens
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Candidate Confirmation */}
+            <div
+              style={{
+                padding: "16px",
+                background: "var(--bg-canvas)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--border-hairline)",
+                marginBottom: "24px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <input
+                  type="checkbox"
+                  id="confirm-ats-submission"
+                  checked={confirmedReview}
+                  onChange={(e) => setConfirmedReview(e.target.checked)}
+                  style={{ marginTop: "3px", width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <label
+                  htmlFor="confirm-ats-submission"
+                  className="body-sm"
+                  style={{ cursor: "pointer", color: "var(--ink-primary)" }}
+                >
+                  <strong>I have reviewed these materials and approved answers.</strong> Record this
+                  submission into my Application Capsule and transition status to{" "}
+                  <span className="badge badge-blue">Applied</span>.
+                </label>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="btn btn-secondary"
+                disabled={savingApp}
+              >
+                Back to Editing
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSubmission}
+                disabled={!confirmedReview || savingApp}
+                className="btn btn-primary"
+              >
+                {savingApp ? "Submitting & Freezing Capsule..." : "Confirm & Submit Application →"}
               </button>
             </div>
           </div>

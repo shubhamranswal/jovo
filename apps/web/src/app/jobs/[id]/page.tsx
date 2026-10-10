@@ -137,11 +137,22 @@ export default function JobDetailPage() {
         >
           <div>
             <div
-              style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "8px",
+                flexWrap: "wrap",
+              }}
             >
               <h1 className="headline-lg" style={{ fontSize: "1.75rem" }}>
                 {job.title}
               </h1>
+              {job.metadata_json?.is_demo || job.source_names_json?.includes("Demo Fixture") ? (
+                <span className="badge badge-amber">DEMO FIXTURE</span>
+              ) : (
+                <span className="badge badge-blue">LIVE SERPAPI RESULT</span>
+              )}
               {job.remote_type && <span className="badge badge-green">{job.remote_type}</span>}
               {job.employment_type && (
                 <span className="badge badge-gray">{job.employment_type}</span>

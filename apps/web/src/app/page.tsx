@@ -8,8 +8,8 @@ import { api } from "../lib/api";
 
 export default function HomePage() {
   const router = useRouter();
-  const [role, setRole] = useState("Senior Backend Engineer");
-  const [location, setLocation] = useState("Remote");
+  const [role, setRole] = useState("Senior Go Backend Engineer");
+  const [location, setLocation] = useState("India");
   const [remoteOnly, setRemoteOnly] = useState(true);
 
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
@@ -53,10 +53,14 @@ export default function HomePage() {
             alignItems: "center",
             gap: "8px",
             marginBottom: "16px",
+            flexWrap: "wrap",
           }}
         >
           <span className="badge badge-gray" style={{ fontFamily: "var(--font-mono)" }}>
             APPLICATION MEMORY OPERATING SYSTEM
+          </span>
+          <span className="badge badge-blue">
+            DEMO WORKSPACE • CANDIDATE: SHUBHAM SINGH RANSWAL
           </span>
         </div>
         <h1 className="display-lg" style={{ marginBottom: "14px" }}>

@@ -56,6 +56,34 @@ export function Navbar() {
               alignItems: "center",
               gap: "6px",
               marginLeft: "12px",
+              padding: "3px 10px",
+              borderRadius: "var(--radius-full)",
+              background: "#EEF2FF",
+              border: "1px solid #C7D2FE",
+              color: "#3730A3",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.6875rem",
+              fontWeight: 600,
+            }}
+            title="Seeded Candidate: Shubham Singh Ranswal • Deterministic First-Run Workspace"
+          >
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#4F46E5",
+              }}
+            />
+            <span>Demo Workspace</span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              marginLeft: "6px",
               padding: "3px 9px",
               borderRadius: "var(--radius-full)",
               background: "var(--bg-canvas)",

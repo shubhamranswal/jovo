@@ -9,9 +9,9 @@ import { api } from "../../lib/api";
 function JobSearchContent() {
   const searchParams = useSearchParams();
 
-  const [role, setRole] = useState(searchParams.get("role") || "Senior Backend Engineer");
+  const [role, setRole] = useState(searchParams.get("role") || "Senior Go Backend Engineer");
   const [location, setLocation] = useState(searchParams.get("location") || "India");
-  const [skills, setSkills] = useState("Python, FastAPI");
+  const [skills, setSkills] = useState("Golang, Python, FastAPI, Cryptography");
   const [remoteOnly, setRemoteOnly] = useState(searchParams.get("remote") === "true");
 
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -303,11 +303,18 @@ function JobSearchContent() {
                         alignItems: "center",
                         gap: "10px",
                         marginBottom: "6px",
+                        flexWrap: "wrap",
                       }}
                     >
                       <h2 className="headline-sm" style={{ fontSize: "1.1rem" }}>
                         {job.title}
                       </h2>
+                      {job.metadata_json?.is_demo ||
+                      job.source_names_json?.includes("Demo Fixture") ? (
+                        <span className="badge badge-amber">DEMO FIXTURE</span>
+                      ) : (
+                        <span className="badge badge-blue">LIVE SERPAPI RESULT</span>
+                      )}
                       {job.remote_type && (
                         <span className="badge badge-green">{job.remote_type}</span>
                       )}

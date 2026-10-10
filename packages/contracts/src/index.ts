@@ -16,6 +16,7 @@ export type ApplicationStatus =
   | "Applied"
   | "Recruiter Screen"
   | "Interview"
+  | "Interviewing"
   | "Technical"
   | "Final"
   | "Offer"
@@ -207,17 +208,21 @@ export interface JobTailorResponse {
 
 export interface Application {
   id: string;
-  career_profile_id: string;
+  career_profile_id?: string;
+  user_id?: string;
   job_id?: string | null;
   company_id?: string | null;
-  target_role: string;
-  target_company: string;
+  title?: string;
+  company_name?: string | null;
+  target_role?: string;
+  target_company?: string;
   status: ApplicationStatus;
   applied_at?: string | null;
   source?: string | null;
   application_url?: string | null;
   job_snapshot_json: Record<string, unknown>;
   notes?: string | null;
+  metadata_json?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

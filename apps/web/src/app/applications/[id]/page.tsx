@@ -348,16 +348,21 @@ export default function ApplicationDetailPage() {
               >
                 {application.status}
               </span>
+              {Boolean(application.metadata_json?.is_demo) && (
+                <span className="badge badge-amber">DEMO DATA</span>
+              )}
             </div>
 
             <h1 className="headline-lg" style={{ fontSize: "1.9rem", marginBottom: "4px" }}>
-              {application.target_role}
+              {application.title || application.target_role || "Untitled Role"}
             </h1>
             <div
               className="body-md"
               style={{ color: "var(--ink-secondary)", marginBottom: "14px" }}
             >
-              <strong style={{ color: "var(--ink-primary)" }}>{application.target_company}</strong>{" "}
+              <strong style={{ color: "var(--ink-primary)" }}>
+                {application.company_name || application.target_company || "Organization"}
+              </strong>{" "}
               • Applied:{" "}
               <span style={{ fontFamily: "var(--font-mono)" }}>
                 {application.applied_at

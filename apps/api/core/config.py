@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000"
 
     SERPAPI_API_KEY: str = ""
+    SERPAPI_FALLBACK_API_KEY: str = ""
+    DEMO_MODE: bool = True
     GEMINI_API_KEY: str = ""
     LLM_MODEL: str = "gemini-2.5-flash"
     GITHUB_TOKEN: str = ""

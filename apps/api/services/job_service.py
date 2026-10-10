@@ -28,12 +28,13 @@ class JobService:
 
     @staticmethod
     def get_or_create_company(db: Session, name: str, domain: str | None = None) -> Company:
-        clean_name = name.strip()
+        clean_name = name.strip()[:255]
+        clean_domain = domain.strip()[:255] if domain else None
         company = db.scalar(select(Company).where(Company.canonical_name == clean_name))
         if not company:
             company = Company(
                 canonical_name=clean_name,
-                domain=domain,
+                domain=clean_domain,
             )
             db.add(company)
             db.commit()
@@ -53,19 +54,19 @@ class JobService:
 
         job = Job(
             company_id=company.id,
-            title=payload.title,
-            location=payload.location,
-            remote_type=payload.remote_type,
-            employment_type=payload.employment_type,
+            title=(payload.title[:255] if payload.title else "Untitled Role"),
+            location=(payload.location[:255] if payload.location else None),
+            remote_type=(payload.remote_type[:50] if payload.remote_type else None),
+            employment_type=(payload.employment_type[:50] if payload.employment_type else None),
             salary_min=payload.salary_min,
             salary_max=payload.salary_max,
-            currency=payload.currency,
+            currency=(payload.currency[:10] if payload.currency else None),
             description=payload.description,
             normalized_requirements_json=payload.normalized_requirements_json,
             source_urls_json=payload.source_urls_json,
             source_names_json=payload.source_names_json,
             canonical_url=payload.canonical_url,
-            external_id=payload.external_id,
+            external_id=(payload.external_id[:255] if payload.external_id else None),
             posted_at=payload.posted_at,
             fingerprint=fingerprint,
             metadata_json=payload.metadata_json,
@@ -127,7 +128,14 @@ class JobService:
 
     @staticmethod
     def list_jobs(db: Session, query_params: JobSearchQuery) -> tuple[list[Job], int]:
-        JobService._seed_demo_job_if_empty(db)
+        from apps.api.core.config import settings
+
+        if settings.DEMO_MODE:
+            from apps.api.services.demo_workspace_service import DemoWorkspaceService
+
+            DemoWorkspaceService.ensure_demo_workspace(db)
+        else:
+            JobService._seed_demo_job_if_empty(db)
         stmt = select(Job).options(joinedload(Job.company))
 
         if query_params.query:
