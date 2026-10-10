@@ -13,29 +13,30 @@
         <div class="brand-lockup">
           <img src="icons/icon-32.png" alt="Jovo" class="brand-logo" width="22" height="22" />
           <span class="brand-title">Jovo</span>
+          <span class="brand-tag">Apply anywhere. Forget nothing.</span>
         </div>
-        <span class="badge" id="atsBadge">Detecting...</span>
+        <span class="badge badge-ats" id="atsBadge">Detecting...</span>
       </div>
-      <p class="tagline">Apply smarter. Get hired faster.</p>
     </header>
 
     <div id="loadingView" class="view">
       <div class="spinner"></div>
-      <p>Analyzing job application page...</p>
+      <p class="loading-text">Analyzing job application page...</p>
     </div>
 
     <div id="mainView" class="view hidden">
       <!-- Detected Job Card -->
       <section class="card job-card">
         <div class="job-meta">
+          <div class="job-eyebrow">Active Opportunity</div>
           <h2 id="jobTitle" class="job-title">Job Title</h2>
           <div id="jobCompany" class="job-company">Company</div>
-          <div id="jobMatchStatus" class="job-status-sub">Checking Jovo library...</div>
+          <div id="jobMatchStatus" class="job-status-sub">Checking catalog...</div>
         </div>
         <div id="matchSection" class="match-banner">
-          <div class="match-score" id="matchScore">--%</div>
+          <div class="match-score-pill match-dial-neutral" id="matchScore">--%</div>
           <div class="match-summary">
-            <span class="match-label">Jovo Match</span>
+            <span class="match-label">Fit Rating</span>
             <span class="match-sub" id="matchSub">Evidence Grounded</span>
           </div>
         </div>
@@ -44,8 +45,11 @@
       <!-- Autofill Safe Fields Section -->
       <section class="card section-card">
         <div class="section-header">
-          <h3 class="section-title">1. Safe Field Autofill</h3>
-          <span class="field-count" id="fieldCount">0 fields</span>
+          <div class="section-title-wrap">
+            <span class="section-step-num">01</span>
+            <h3 class="section-title">Safe Field Autofill</h3>
+          </div>
+          <span class="field-count" id="fieldCount">0 safe fields</span>
         </div>
         <p class="section-desc">Fills verified profile fields (Name, Email, Phone, City, Resume, URLs). Ambiguous & sensitive inputs are strictly skipped.</p>
         <button id="autofillBtn" class="btn btn-primary">Autofill Safe Fields & Resume</button>
@@ -56,19 +60,33 @@
       <!-- Resume & Cover Letter Section -->
       <section class="card section-card" id="materialsSection">
         <div class="section-header">
-          <h3 class="section-title">2. Resume & Cover Letter</h3>
-          <span class="field-count" id="materialsStatus">Verified</span>
-        </div>
-        <p class="section-desc">Authoritative materials grounded in your career profile.</p>
-        
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; font-size:12px;">
-            <span>📄 <strong>Master Resume</strong> (.pdf)</span>
-            <span style="color:#10b981; font-weight:600; font-size:11px;">✓ Auto-Attached</span>
+          <div class="section-title-wrap">
+            <span class="section-step-num">02</span>
+            <h3 class="section-title">Verified Materials</h3>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; font-size:12px;">
-            <span>✉️ <strong>Tailored Cover Letter</strong></span>
-            <button id="copyCoverLetterBtn" class="btn" style="padding:4px 8px; font-size:11px; background:#334155; color:#f8fafc; border:none; border-radius:4px; cursor:pointer;">Copy Letter</button>
+          <span class="badge-verified" id="materialsStatus">✓ Grounded</span>
+        </div>
+        <p class="section-desc">Authoritative materials grounded in your verified career profile.</p>
+        
+        <div class="materials-list">
+          <div class="material-item">
+            <div class="material-name">
+              <span class="material-icon">📄</span>
+              <div class="material-title-wrap">
+                <strong>Master Resume</strong>
+                <span class="material-format">(.pdf)</span>
+              </div>
+            </div>
+            <span class="material-badge">✓ Auto-Attached</span>
+          </div>
+          <div class="material-item">
+            <div class="material-name">
+              <span class="material-icon">✉️</span>
+              <div class="material-title-wrap">
+                <strong>Tailored Cover Letter</strong>
+              </div>
+            </div>
+            <button id="copyCoverLetterBtn" class="btn btn-secondary btn-sm">Copy Letter</button>
           </div>
         </div>
       </section>
@@ -76,7 +94,10 @@
       <!-- Application Questions Assistant -->
       <section class="card section-card" id="questionsSection">
         <div class="section-header">
-          <h3 class="section-title">3. Free-Text Questions</h3>
+          <div class="section-title-wrap">
+            <span class="section-step-num">03</span>
+            <h3 class="section-title">Free-Text Questions</h3>
+          </div>
           <span class="field-count" id="questionCount">0 found</span>
         </div>
         <p class="section-desc">Drafts evidence-backed answers. Never fabricates claims. Review, edit, and approve before insertion.</p>
@@ -86,7 +107,11 @@
       <!-- Capture / Remember Application Section -->
       <section class="card capture-card">
         <div class="section-header">
-          <h3 class="section-title">4. Application Memory</h3>
+          <div class="section-title-wrap">
+            <span class="section-step-num">04</span>
+            <h3 class="section-title">Application Memory</h3>
+          </div>
+          <span class="capsule-telemetry-badge">Permanent Capsule</span>
         </div>
         <p class="section-desc">Freeze and preserve this exact application (JD, safe fields, tailored materials & approved Q&A) in your permanent Application Capsule.</p>
         
@@ -102,9 +127,9 @@
         <button id="captureBtn" class="btn btn-accent">Save Application to Capsule</button>
         <div id="captureSuccess" class="capture-success hidden">
           <span class="check-icon">✓</span>
-          <div>
+          <div class="capture-success-body">
             <strong>Application Saved to Memory!</strong>
-            <p>Capsule created with frozen JD snapshot, documents & Q&A.</p>
+            <p>Capsule created with frozen JD snapshot, documents & approved Q&A.</p>
             <a id="viewCapsuleLink" href="#" target="_blank" class="capsule-link">View Application Capsule →</a>
           </div>
         </div>
@@ -112,7 +137,10 @@
     </div>
 
     <footer class="footer">
-      <span id="backendStatus" class="backend-indicator">● Jovo Connected</span>
+      <div id="backendStatus" class="backend-indicator">
+        <span class="status-dot"></span>
+        <span>Jovo Connected • Demo Mode</span>
+      </div>
     </footer>
   </div>
 

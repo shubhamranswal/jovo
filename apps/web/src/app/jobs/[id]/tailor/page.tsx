@@ -193,7 +193,9 @@ export default function TailorJobPage() {
                 title={`Open real employer application portal: ${job.canonical_url}`}
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
-                <span>🌐 Open Real Job Portal ({job.source_names_json?.[0] || "Employer Site"})</span>
+                <span>
+                  🌐 Open Real Job Portal ({job.source_names_json?.[0] || "Employer Site"})
+                </span>
                 <span>↗</span>
               </a>
             ) : null}
@@ -216,34 +218,41 @@ export default function TailorJobPage() {
           </div>
         </div>
 
-        {job?.source_urls_json && job.source_urls_json.length > 0 && !job?.metadata_json?.is_demo && (
-          <div
-            style={{
-              marginTop: "14px",
-              paddingTop: "12px",
-              borderTop: "1px solid var(--border-hairline)",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              flexWrap: "wrap",
-            }}
-          >
-            <span className="telemetry-xs text-muted">All Live Apply Options:</span>
-            {job.source_urls_json.map((url, i) => (
-              <a
-                key={i}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="badge badge-blue"
-                style={{ textDecoration: "none", cursor: "pointer", display: "inline-flex", gap: "4px" }}
-              >
-                <span>{job.source_names_json?.[i] || `Source ${i + 1}`}</span>
-                <span>↗</span>
-              </a>
-            ))}
-          </div>
-        )}
+        {job?.source_urls_json &&
+          job.source_urls_json.length > 0 &&
+          !job?.metadata_json?.is_demo && (
+            <div
+              style={{
+                marginTop: "14px",
+                paddingTop: "12px",
+                borderTop: "1px solid var(--border-hairline)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span className="telemetry-xs text-muted">All Live Apply Options:</span>
+              {job.source_urls_json.map((url, i) => (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="badge badge-blue"
+                  style={{
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    gap: "4px",
+                  }}
+                >
+                  <span>{job.source_names_json?.[i] || `Source ${i + 1}`}</span>
+                  <span>↗</span>
+                </a>
+              ))}
+            </div>
+          )}
       </div>
 
       {error && (

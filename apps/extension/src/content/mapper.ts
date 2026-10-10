@@ -34,14 +34,7 @@ const FIELD_SYNONYMS: Record<SafeFieldType, SynonymGroup> = {
     partial: ["first name", "given name", "first_name", "firstname", "fname"],
   },
   lastName: {
-    exact: [
-      "last name",
-      "lastname",
-      "family name",
-      "legal last name",
-      "surname",
-      "lname",
-    ],
+    exact: ["last name", "lastname", "family name", "legal last name", "surname", "lname"],
     partial: ["last name", "family name", "last_name", "lastname", "surname", "lname"],
   },
   fullName: {
@@ -116,7 +109,16 @@ const FIELD_SYNONYMS: Record<SafeFieldType, SynonymGroup> = {
     partial: ["country", "nation"],
   },
   postalCode: {
-    exact: ["postal code", "zip code", "zip", "postcode", "pin code", "pincode", "postal", "zipcode"],
+    exact: [
+      "postal code",
+      "zip code",
+      "zip",
+      "postcode",
+      "pin code",
+      "pincode",
+      "postal",
+      "zipcode",
+    ],
     partial: ["postal", "postcode", "zip", "pincode"],
   },
   linkedin: {
@@ -522,9 +524,13 @@ export function extractAccessibleLabel(el: HTMLElement, doc: Document): string {
     // Check preceding element sibling of this ancestor container (e.g. two-column label/input layout)
     if (curr.previousElementSibling) {
       const prevContainer = curr.previousElementSibling as HTMLElement;
-      const prevLbl = prevContainer.querySelector("label, legend, span[class*='label'], p[class*='label']");
+      const prevLbl = prevContainer.querySelector(
+        "label, legend, span[class*='label'], p[class*='label']"
+      );
       const text = (
-        (prevLbl ? prevLbl.textContent || (prevLbl as HTMLElement).innerText : prevContainer.textContent || prevContainer.innerText) || ""
+        (prevLbl
+          ? prevLbl.textContent || (prevLbl as HTMLElement).innerText
+          : prevContainer.textContent || prevContainer.innerText) || ""
       ).trim();
       if (!isBoilerplateText(text)) {
         return text;
@@ -533,7 +539,7 @@ export function extractAccessibleLabel(el: HTMLElement, doc: Document): string {
 
     // Check if this container has a dedicated single label
     const labels = curr.querySelectorAll("label, legend, span[class*='label'], p[class*='label']");
-    if (labels.length === 1) {
+    if (labels.length === 1 && labels[0]) {
       const text = (labels[0].textContent || (labels[0] as HTMLElement).innerText || "").trim();
       if (!isBoilerplateText(text)) {
         return text;

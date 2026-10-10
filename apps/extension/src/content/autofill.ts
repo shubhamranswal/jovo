@@ -17,7 +17,8 @@ import { isElementSensitive } from "./security";
 function isAvatarFileInput(el: HTMLElement): boolean {
   const accept = (el.getAttribute("accept") || "").toLowerCase();
   const safeClassName = typeof el.className === "string" ? el.className.toLowerCase() : "";
-  const identifiers = `${el.getAttribute("name") || ""} ${el.id || ""} ${el.getAttribute("aria-label") || ""} ${safeClassName}`.toLowerCase();
+  const identifiers =
+    `${el.getAttribute("name") || ""} ${el.id || ""} ${el.getAttribute("aria-label") || ""} ${safeClassName}`.toLowerCase();
 
   if (
     identifiers.includes("avatar") ||
@@ -66,8 +67,7 @@ export function autofillSafeFields(
   const nameParts = fullName.trim().split(/\s+/);
   const firstName = nameParts[0] || "Shubham";
   const lastName = nameParts.slice(1).join(" ") || "Singh Ranswal";
-  const email =
-    (profile.preferences_json?.email as string) || "shubhamranswal@gmail.com";
+  const email = (profile.preferences_json?.email as string) || "shubhamranswal@gmail.com";
   const phone = (profile.preferences_json?.phone as string) || "+91 9560793525";
   const linkedin =
     (profile.preferences_json?.linkedin as string) || "https://linkedin.com/in/shubhamranswal";
@@ -82,7 +82,7 @@ export function autofillSafeFields(
     (profile.preferences_json?.website as string) || "https://shubhamranswal.github.io";
 
   const resumeText =
-    (profile.resumes && profile.resumes[0]?.extracted_text) ||
+    ((profile as any).resumes && (profile as any).resumes[0]?.extracted_text) ||
     `SHUBHAM SINGH RANSWAL\nSoftware Engineer II\n+91 9560793525 | Noida, Uttar Pradesh | shubhamranswal@gmail.com\nlinkedin.com/in/shubhamranswal | github.com/shubhamranswal\n\nEXPERIENCE\nSoftware Engineer II - Thales (Nov 2024 - Present)\n• Engineered secure payment workflows on Thales payShield 10K HSM with RSA-protected TR-31 key blocks.\n• Built Golang automation utilities and FastAPI backend services.\n\nSKILLS: Golang, Python, FastAPI, Cryptography, HSM, Linux, AI Tooling`;
 
   const coverLetterText = `Dear Hiring Team,\n\nI am writing to express my strong interest in the opportunity at your organization. With a strong track record engineering secure systems, high-performance Golang automation tools, and FastAPI backend platforms at Thales, I deliver robust, resilient software aligned with strict standards.\n\nI look forward to discussing how my engineering background and systems experience can contribute to your team.\n\nSincerely,\n${fullName}\n${phone} | ${email}`;
@@ -101,10 +101,7 @@ export function autofillSafeFields(
       field.element && field.element.isConnected
         ? (field.element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)
         : (document.querySelector(field.selector) as
-            | HTMLInputElement
-            | HTMLSelectElement
-            | HTMLTextAreaElement
-            | null);
+            HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null);
 
     if (!el) {
       result.unfilledFields.push(`${field.label} (element not found in DOM)`);
@@ -169,8 +166,12 @@ export function autofillSafeFields(
       case "phone": {
         const prefixEl =
           el.parentElement?.querySelector("[class*='flag'], [class*='country-code']") ||
-          el.closest("[class*='phone'], [class*='tel']")?.querySelector("[class*='flag'], [class*='country-code']");
-        const prefixText = prefixEl ? (prefixEl.textContent || (prefixEl as HTMLElement).innerText || "").trim() : "";
+          el
+            .closest("[class*='phone'], [class*='tel']")
+            ?.querySelector("[class*='flag'], [class*='country-code']");
+        const prefixText = prefixEl
+          ? (prefixEl.textContent || (prefixEl as HTMLElement).innerText || "").trim()
+          : "";
         if (prefixText.includes("+91") && phone.startsWith("+91")) {
           valToFill = phone.replace(/^\+91\s*/, "").trim();
         } else if (prefixText.includes("+1") && phone.startsWith("+1")) {
@@ -382,8 +383,9 @@ function fillElementSafely(el: HTMLElement, value: string): void {
     for (let i = 0; i < sel.options.length; i++) {
       const opt = sel.options[i];
       if (
-        opt.text.toLowerCase().includes(value.toLowerCase()) ||
-        opt.value.toLowerCase().includes(value.toLowerCase())
+        opt &&
+        (opt.text.toLowerCase().includes(value.toLowerCase()) ||
+          opt.value.toLowerCase().includes(value.toLowerCase()))
       ) {
         sel.selectedIndex = i;
         matched = true;

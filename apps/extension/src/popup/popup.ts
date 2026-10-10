@@ -113,17 +113,34 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (identifyRes.matched && identifyRes.job) {
         matchedJob = identifyRes.job;
         jobMatchStatus.innerText = "✓ Matched to Jovo library";
+        jobMatchStatus.style.color = "var(--fit-high-text)";
         const match: JobMatch = await jobosApi.getJobMatch(matchedJob.id, currentProfile.id);
-        matchScore.innerText = `${match.overall_score}%`;
+        const score = match.overall_score;
+        matchScore.innerText = `${score}%`;
         matchSub.innerText = `${match.strengths_json.length} Strengths Verified`;
+
+        matchScore.className = "match-score-pill";
+        if (score >= 88) {
+          matchScore.classList.add("match-dial-high");
+        } else if (score >= 75) {
+          matchScore.classList.add("match-dial-strong");
+        } else if (score >= 60) {
+          matchScore.classList.add("match-dial-moderate");
+        } else {
+          matchScore.classList.add("match-dial-gap");
+        }
       } else {
         jobMatchStatus.innerText = "New Discovery (not yet saved)";
+        jobMatchStatus.style.color = "var(--ink-muted)";
         matchScore.innerText = "--";
+        matchScore.className = "match-score-pill match-dial-neutral";
         matchSub.innerText = "Ready to Apply";
       }
     } catch (_e) {
       jobMatchStatus.innerText = "Ready to Apply";
+      jobMatchStatus.style.color = "var(--ink-muted)";
       matchScore.innerText = "--";
+      matchScore.className = "match-score-pill match-dial-neutral";
       matchSub.innerText = "Application Assistant Ready";
     }
   }
@@ -146,7 +163,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.className = "question-item";
       item.innerHTML = `
         <div class="question-text">${escapeHtml(q.questionText)}</div>
-        <button class="btn btn-primary draft-btn" data-selector="${escapeHtml(q.selector)}" data-text="${escapeHtml(q.questionText)}">
+        <button class="btn btn-secondary draft-btn" data-selector="${escapeHtml(q.selector)}" data-text="${escapeHtml(q.questionText)}">
           Draft Answer with Evidence
         </button>
         <div class="draft-container hidden"></div>
@@ -181,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               ✓ Grounded in ${evidenceCount > 0 ? evidenceCount + " career evidence item(s)" : "verified career profile"}. Edit as needed before inserting:
             </div>
             <textarea class="draft-textarea" placeholder="Review or edit your answer...">${escapeHtml(initialDraft)}</textarea>
-            <button class="btn btn-accent insert-btn">Approve & Insert into Field</button>
+            <button class="btn btn-primary insert-btn">Approve & Insert into Field</button>
           `;
 
           const textAreaEl = container.querySelector(".draft-textarea") as HTMLTextAreaElement;
@@ -224,13 +241,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Copy Cover Letter click
-  const copyCoverLetterBtn = document.getElementById("copyCoverLetterBtn") as HTMLButtonElement | null;
+  const copyCoverLetterBtn = document.getElementById(
+    "copyCoverLetterBtn"
+  ) as HTMLButtonElement | null;
   if (copyCoverLetterBtn) {
     copyCoverLetterBtn.addEventListener("click", () => {
       const fullName =
         (currentProfile?.preferences_json?.full_name as string) || "Shubham Singh Ranswal";
       const phone = (currentProfile?.preferences_json?.phone as string) || "+91 9560793525";
-      const email = (currentProfile?.preferences_json?.email as string) || "shubhamranswal@gmail.com";
+      const email =
+        (currentProfile?.preferences_json?.email as string) || "shubhamranswal@gmail.com";
       const company = currentJob?.company || "Hiring Team";
       const letter = `Dear ${company} Hiring Team,\n\nI am writing to express my strong interest in the opportunity at ${company}. With a proven track record engineering secure systems, high-performance Golang automation tools, and FastAPI backend platforms at Thales, I deliver robust, resilient software aligned with strict standards.\n\nI look forward to discussing how my engineering background and systems experience can contribute to your team.\n\nSincerely,\n${fullName}\n${phone} | ${email}`;
 
@@ -349,7 +369,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function showError(msg: string) {
-    loadingView.innerHTML = `<div style="color: #ef4444; padding: 12px;"><strong>Error</strong>: ${escapeHtml(msg)}</div>`;
+    loadingView.innerHTML = `<div style="color: var(--fit-gap-text); background: var(--fit-gap-bg); border: 1px solid var(--fit-gap-border); padding: 12px; border-radius: var(--radius-md); font-size: 11px;"><strong>Error</strong>: ${escapeHtml(msg)}</div>`;
   }
 
   function escapeHtml(str: string): string {

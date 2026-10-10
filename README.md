@@ -1,14 +1,39 @@
 <div align="center">
 
-<img src="assets/brand/jovo-logo-128.png" alt="Jovo Logo" width="96" height="96" />
+<img src="assets/brand/jovo-logo-128.png" alt="Jovo Logo" width="100" height="100" />
 
 # Jovo
 
-**Apply smarter. Get hired faster.**
+### Apply smarter. Get hired faster.
 
-_The intelligent job application operating system with persistent application memory._
+_The open-source job application operating system with persistent memory._
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tests Passing](<https://img.shields.io/badge/Tests-48%20Passed%20(100%25)-success?style=for-the-badge&logo=pytest&logoColor=white>)](tests/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
+[![TypeScript 5.7](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](package.json)
+
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](apps/api)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](pyproject.toml)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](apps/web)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](apps/web)
+[![Chrome MV3](https://img.shields.io/badge/Chrome_Extension-MV3-4285F4?style=flat-square&logo=googlechrome&logoColor=white)](apps/extension)
+[![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](infra/docker)
+[![SerpApi](https://img.shields.io/badge/Discovery-SerpApi_Official-008080?style=flat-square&logo=google&logoColor=white)](apps/api/integrations/serpapi)
+[![Gemini AI](https://img.shields.io/badge/AI_Engine-Gemini_2.5_Flash-8E75C2?style=flat-square&logo=googlegemini&logoColor=white)](packages/prompts)
+[![Code Style](https://img.shields.io/badge/Code_Style-Ruff_%7C_Prettier-000000?style=flat-square)](eslint.config.mjs)
+
+<p align="center">
+  <a href="#what-is-jovo">Overview</a> •
+  <a href="#key-features">Features</a> •
+  <a href="#the-wait-it-did-what-moment">The MVP Moment</a> •
+  <a href="#application-capsule">Application Capsule</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#getting-started">Quick Start</a> •
+  <a href="#browser-extension">Extension</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#security--privacy">Security</a>
+</p>
 
 </div>
 
@@ -438,6 +463,30 @@ SerpApi is a core infrastructural pillar of Jovo Search, powering the live disco
 
 ---
 
+## Contributing
+
+We welcome community contributions! Whether you are improving ATS adapters, adding new heuristic mappers, enhancing LLM prompt grounding, or fixing issues:
+
+1. Review our [**Contributing Guide**](CONTRIBUTING.md) for architecture rules, setup instructions, and testing workflows.
+2. Review our [**Code of Conduct**](CODE_OF_CONDUCT.md).
+3. Open an issue or fork the repo and submit a PR against `main`.
+
+---
+
+## Community & Code of Conduct
+
+Jovo is an open, welcoming community for engineers and job seekers. All contributors are expected to uphold the standards described in our [**Code of Conduct**](CODE_OF_CONDUCT.md).
+
+---
+
+## Security & Vulnerability Reporting
+
+If you believe you have found a security vulnerability in Jovo, please do not disclose it publicly. Review our [**Security Policy**](SECURITY.md) for instructions on confidential disclosure.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+<img src="https://komarev.com/ghpvc/?username=shubhamranswal&color=00000000&label=" width="1" height="1" />
