@@ -118,7 +118,19 @@ export default function JobDetailPage() {
         >
           ← Back to Discovery
         </Link>
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          {job.canonical_url && (
+            <a
+              href={job.canonical_url}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-secondary"
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <span>Apply on {job.source_names_json?.[0] || "Employer Portal"}</span>
+              <span>↗</span>
+            </a>
+          )}
           <button onClick={() => router.push(`/jobs/${job.id}/tailor`)} className="btn btn-primary">
             Tailor Application Materials →
           </button>
@@ -216,6 +228,43 @@ export default function JobDetailPage() {
       <div className="grid-sidebar">
         {/* Left Column: Job Description and Requirements */}
         <div>
+          {/* Live Application Sources from SerpApi */}
+          {job.source_urls_json && job.source_urls_json.length > 0 && (
+            <div className="card" style={{ marginBottom: "24px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "10px",
+                }}
+              >
+                <h3 className="headline-sm">Live Application Sources</h3>
+                <span className="telemetry-xs badge badge-blue">Real Job Links</span>
+              </div>
+              <p className="body-sm text-muted" style={{ marginBottom: "14px" }}>
+                Apply directly to this employer. The Jovo Chrome Extension automatically detects
+                these portals to assist with verified profile autofill, custom Q&A drafting, and
+                freezing the permanent Application Capsule.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                {job.source_urls_json.map((url, idx) => (
+                  <a
+                    key={idx}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                  >
+                    <span>{job.source_names_json?.[idx] || `Application Source ${idx + 1}`}</span>
+                    <span>↗</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Normalized Requirements */}
           {reqs.length > 0 && (
             <div className="card" style={{ marginBottom: "24px" }}>

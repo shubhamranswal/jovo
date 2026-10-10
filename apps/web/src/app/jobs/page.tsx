@@ -11,7 +11,10 @@ function JobSearchContent() {
 
   const [role, setRole] = useState(searchParams.get("role") || "Senior Go Backend Engineer");
   const [location, setLocation] = useState(searchParams.get("location") || "India");
-  const [skills, setSkills] = useState("Golang, Python, FastAPI, Cryptography");
+  const [skills, setSkills] = useState("Go, Python");
+  const [company, setCompany] = useState("");
+  const [employmentType, setEmploymentType] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(searchParams.get("remote") === "true");
 
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -57,6 +60,9 @@ function JobSearchContent() {
         location: location.trim() || undefined,
         remote: remoteOnly,
         skills: skillsArray.length ? skillsArray : undefined,
+        company: company.trim() || undefined,
+        employment_type: employmentType || undefined,
+        experience_level: experienceLevel || undefined,
         persist: true,
       });
 
@@ -82,6 +88,7 @@ function JobSearchContent() {
         query: role.trim() || undefined,
         location: location.trim() || undefined,
         remote_type: remoteOnly ? "remote" : undefined,
+        employment_type: employmentType || undefined,
         page: 1,
         page_size: 20,
       });
@@ -116,13 +123,13 @@ function JobSearchContent() {
       {/* Explicit Search Controls */}
       <div className="card" style={{ marginBottom: "28px", padding: "24px" }}>
         <form onSubmit={handleLiveSerpApiDiscovery}>
+          {/* Row 1: Core Search */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1fr 1fr auto",
+              gridTemplateColumns: "1.2fr 1fr 1fr",
               gap: "14px",
-              alignItems: "flex-end",
-              marginBottom: "16px",
+              marginBottom: "14px",
             }}
           >
             <div className="input-group">
@@ -147,13 +154,64 @@ function JobSearchContent() {
             </div>
 
             <div className="input-group">
-              <label className="label">Key Skills (Comma separated)</label>
+              <label className="label">Key Skills</label>
               <input
                 className="input"
                 value={skills}
                 onChange={(e) => setSkills(e.target.value)}
-                placeholder="e.g. Python, FastAPI, SQL"
+                placeholder="e.g. Go, Python (optional)"
               />
+            </div>
+          </div>
+
+          {/* Row 2: Granular Filters (Company, Schedule, Level, Remote) */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr auto",
+              gap: "14px",
+              alignItems: "flex-end",
+              marginBottom: "16px",
+            }}
+          >
+            <div className="input-group">
+              <label className="label">Company Filter</label>
+              <input
+                className="input"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="e.g. Google, Stripe, Thales (optional)"
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="label">Employment Type</label>
+              <select
+                className="input"
+                value={employmentType}
+                onChange={(e) => setEmploymentType(e.target.value)}
+              >
+                <option value="">All Employment Types</option>
+                <option value="full-time">Full-time</option>
+                <option value="contract">Contract</option>
+                <option value="part-time">Part-time</option>
+                <option value="internship">Internship</option>
+              </select>
+            </div>
+
+            <div className="input-group">
+              <label className="label">Experience Level</label>
+              <select
+                className="input"
+                value={experienceLevel}
+                onChange={(e) => setExperienceLevel(e.target.value)}
+              >
+                <option value="">All Experience Levels</option>
+                <option value="Senior">Senior</option>
+                <option value="Lead">Lead / Principal</option>
+                <option value="Mid">Mid-Level</option>
+                <option value="Junior">Entry / Junior</option>
+              </select>
             </div>
 
             <div
@@ -407,11 +465,46 @@ function JobSearchContent() {
                         href={job.canonical_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="btn btn-outline btn-sm"
-                        style={{ textAlign: "center" }}
+                        className="btn btn-secondary btn-sm"
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          fontWeight: 500,
+                        }}
                       >
-                        External Source ↗
+                        <span>{job.source_names_json?.[0] || "Apply Directly"}</span>
+                        <span>↗</span>
                       </a>
+                    )}
+
+                    {job.source_urls_json && job.source_urls_json.length > 1 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "4px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {job.source_urls_json.slice(1, 3).map((url, i) => (
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="telemetry-xs text-muted"
+                            style={{
+                              textDecoration: "underline",
+                              fontSize: "0.6875rem",
+                            }}
+                          >
+                            {job.source_names_json?.[i + 1] || `Option ${i + 2}`} ↗
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>

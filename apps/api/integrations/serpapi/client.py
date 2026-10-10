@@ -98,6 +98,21 @@ class SerpApiClient(SerpApiClientProtocol):
         )
         return any(kw in lower_err for kw in quota_keywords)
 
+    @staticmethod
+    def _is_empty_results_response(status_code: int, data: Any) -> bool:
+        """Checks if SerpApi returned a standard zero-results message from Google Jobs."""
+        if status_code != 200 or not isinstance(data, dict):
+            return False
+        err = str(data.get("error", "")).lower()
+        jobs_state = str(
+            data.get("search_information", {}).get("jobs_results_state", "")
+        ).lower()
+        return (
+            "hasn't returned any results" in err
+            or "no results" in err
+            or jobs_state == "fully empty"
+        )
+
     async def _execute_request(
         self,
         client: httpx.AsyncClient,
@@ -144,6 +159,15 @@ class SerpApiClient(SerpApiClientProtocol):
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             status_code, data, body_text = await self._execute_request(client, initial_key, params)
 
+            # Handle benign zero-results response from SerpApi Google Jobs engine
+            if self._is_empty_results_response(status_code, data):
+                return SerpApiRawResponse(
+                    search_metadata=None,
+                    search_parameters=data.get("search_parameters") if isinstance(data, dict) else None,
+                    jobs_results=[],
+                    error=None,
+                )
+
             error_message = ""
             if isinstance(data, dict) and data.get("error"):
                 error_message = str(data["error"])
@@ -161,6 +185,15 @@ class SerpApiClient(SerpApiClientProtocol):
                 status_code, data, body_text = await self._execute_request(
                     client, fallback_key, params
                 )
+
+                if self._is_empty_results_response(status_code, data):
+                    return SerpApiRawResponse(
+                        search_metadata=None,
+                        search_parameters=data.get("search_parameters") if isinstance(data, dict) else None,
+                        jobs_results=[],
+                        error=None,
+                    )
+
                 error_message = ""
                 if isinstance(data, dict) and data.get("error"):
                     error_message = str(data["error"])

@@ -45,14 +45,16 @@ class SearchPlanner:
             query_parts.append(f"at {preferences.company.strip()}")
 
         # 4. Top skills (filter out empty/duplicate strings)
+        role_words = clean_role.split()
         valid_skills = [
             s.strip()
             for s in preferences.skills
             if s.strip() and s.strip().lower() not in clean_role.lower()
         ]
         if valid_skills:
-            # Take top 3 skills to avoid bloated query degradation
-            query_parts.append(" ".join(valid_skills[:3]))
+            # If role is already multi-word, append at most 1 skill to avoid over-constraining Google search
+            max_skills = 1 if len(role_words) >= 3 else 2
+            query_parts.append(" ".join(valid_skills[:max_skills]))
 
         # 5. Remote keyword handling
         if preferences.remote is True:

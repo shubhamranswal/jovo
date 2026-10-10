@@ -240,7 +240,8 @@ class CareerService:
             s_date = exp.start_date.strftime("%Y-%m") if exp.start_date else "Past"
             e_date = exp.end_date.strftime("%Y-%m") if exp.end_date else "Present"
             desc = exp.description or ""
-            exp_entries.append(f"- {exp.title} at {exp.company_name} ({s_date} - {e_date}): {desc}")
+            org = getattr(exp, "organization", None) or getattr(exp, "company_name", "Organization")
+            exp_entries.append(f"- {exp.title} at {org} ({s_date} - {e_date}): {desc}")
 
         experiences_text = "\n".join(exp_entries) or "None recorded."
         evidence_text = (
