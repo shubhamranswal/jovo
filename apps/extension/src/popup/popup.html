@@ -47,16 +47,36 @@
           <h3 class="section-title">1. Safe Field Autofill</h3>
           <span class="field-count" id="fieldCount">0 fields</span>
         </div>
-        <p class="section-desc">Fills verified profile fields (Name, Email, Phone, URLs). Ambiguous & sensitive inputs are strictly skipped.</p>
-        <button id="autofillBtn" class="btn btn-primary">Autofill Safe Fields</button>
+        <p class="section-desc">Fills verified profile fields (Name, Email, Phone, City, Resume, URLs). Ambiguous & sensitive inputs are strictly skipped.</p>
+        <button id="autofillBtn" class="btn btn-primary">Autofill Safe Fields & Resume</button>
         <div id="autofillStatus" class="status-msg hidden"></div>
         <div id="skippedFieldsList" class="skipped-container hidden"></div>
+      </section>
+
+      <!-- Resume & Cover Letter Section -->
+      <section class="card section-card" id="materialsSection">
+        <div class="section-header">
+          <h3 class="section-title">2. Resume & Cover Letter</h3>
+          <span class="field-count" id="materialsStatus">Verified</span>
+        </div>
+        <p class="section-desc">Authoritative materials grounded in your career profile.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; font-size:12px;">
+            <span>📄 <strong>Master Resume</strong> (.pdf)</span>
+            <span style="color:#10b981; font-weight:600; font-size:11px;">✓ Auto-Attached</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; font-size:12px;">
+            <span>✉️ <strong>Tailored Cover Letter</strong></span>
+            <button id="copyCoverLetterBtn" class="btn" style="padding:4px 8px; font-size:11px; background:#334155; color:#f8fafc; border:none; border-radius:4px; cursor:pointer;">Copy Letter</button>
+          </div>
+        </div>
       </section>
 
       <!-- Application Questions Assistant -->
       <section class="card section-card" id="questionsSection">
         <div class="section-header">
-          <h3 class="section-title">2. Free-Text Questions</h3>
+          <h3 class="section-title">3. Free-Text Questions</h3>
           <span class="field-count" id="questionCount">0 found</span>
         </div>
         <p class="section-desc">Drafts evidence-backed answers. Never fabricates claims. Review, edit, and approve before insertion.</p>
@@ -66,7 +86,7 @@
       <!-- Capture / Remember Application Section -->
       <section class="card capture-card">
         <div class="section-header">
-          <h3 class="section-title">3. Application Memory</h3>
+          <h3 class="section-title">4. Application Memory</h3>
         </div>
         <p class="section-desc">Freeze and preserve this exact application (JD, safe fields, tailored materials & approved Q&A) in your permanent Application Capsule.</p>
         

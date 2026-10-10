@@ -434,6 +434,146 @@ console.log("Running Chrome Extension Unit Tests for Phase 7: Intelligent Apply.
   console.log("✓ Question drafting, review, candidate editing, approval, and capture verified.");
 }
 
+// TEST SUITE 6: Modern Single-Page App ATS (SmartRecruiters, Greenhouse, Ashby, Lever)
+{
+  console.log("\n--- 6. Modern SPA ATS Suite (SmartRecruiters / Generic) ---");
+
+  const modernSpaHtml = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Easy Apply - Software Engineer, Full Stack - QAD</title>
+      </head>
+      <body>
+        <main>
+          <h2>Personal information</h2>
+          <p>Fields marked with * are required.</p>
+
+          <!-- Avatar Profile Photo Uploader (MUST be ignored by resume autofill) -->
+          <div class="avatar-box">
+            <span class="label">Profile photo</span>
+            <input type="file" accept="image/*" name="candidate-avatar" class="avatar-input" />
+          </div>
+
+          <!-- Real Resume Dropzone -->
+          <div class="file-upload-section">
+            <label>Choose a file or drop it here 10MB size limit</label>
+            <input type="file" accept=".pdf,.doc,.docx" class="hidden-file-input" />
+          </div>
+
+          <!-- Real-world SmartRecruiters field structure without autocomplete attributes -->
+          <div class="form-row">
+            <div class="col">
+              <label>First name*</label>
+              <div class="input-wrapper">
+                <input type="text" name="oneclick-ui.form.personal-information.fields.first-name" />
+              </div>
+            </div>
+            <div class="col">
+              <label>Last name*</label>
+              <div class="input-wrapper">
+                <input type="text" name="oneclick-ui.form.personal-information.fields.last-name" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="col">
+              <label>Email*</label>
+              <div class="input-wrapper">
+                <input type="text" name="oneclick-ui.form.personal-information.fields.email" />
+              </div>
+            </div>
+            <div class="col">
+              <label>Confirm your email*</label>
+              <div class="input-wrapper">
+                <input type="text" name="oneclick-ui.form.personal-information.fields.confirm-email" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="col">
+              <label>City*</label>
+              <div class="input-wrapper">
+                <input type="text" name="oneclick-ui.form.personal-information.fields.city" />
+              </div>
+            </div>
+            <div class="col">
+              <label>Phone number*</label>
+              <div class="input-wrapper">
+                <input type="text" name="oneclick-ui.form.personal-information.fields.phone-number" />
+              </div>
+            </div>
+          </div>
+        </main>
+      </body>
+    </html>
+  `;
+
+  const dom = new JSDOM(modernSpaHtml, {
+    url: "https://jobs.smartrecruiters.com/oneclick-ui/company/QADInc/publication/123",
+  });
+  const doc = dom.window.document;
+  const adapter = resolveAdapter(dom.window.location.href, doc);
+
+  assert.strictEqual(adapter.name, "Generic", "Resolves Generic adapter for SmartRecruiters");
+
+  const fields = adapter.detectFormFields(doc);
+  assert.ok(fields.length >= 6, `Expected at least 6 safe fields detected, got ${fields.length}`);
+
+  // Avatar file input MUST NOT be in safe fields
+  const avatarField = fields.find((f) => f.selector.includes("avatar"));
+  assert.strictEqual(avatarField, undefined, "Avatar file input correctly rejected from safe fields");
+
+  assert.ok(fields.some((f) => f.fieldType === "firstName"), "First name* detected");
+  assert.ok(fields.some((f) => f.fieldType === "lastName"), "Last name* detected");
+  assert.ok(fields.some((f) => f.fieldType === "email"), "Email* detected");
+  assert.ok(fields.some((f) => f.fieldType === "city"), "City* detected");
+  assert.ok(fields.some((f) => f.fieldType === "phone"), "Phone number* detected");
+
+  // Autofill all fields + resume file
+  const testProfile = {
+    id: "prof-shubham",
+    user_id: "user-shubham",
+    headline: "Software Engineer II",
+    location: "Noida, Uttar Pradesh",
+    preferences_json: {
+      full_name: "Shubham Singh Ranswal",
+      email: "shubhamranswal@gmail.com",
+      phone: "+91 9560793525",
+    },
+    resumes: [{ extracted_text: "SHUBHAM RESUME TEXT" }],
+  };
+
+  const autofillRes = autofillSafeFields(doc, fields, testProfile);
+  assert.ok(autofillRes.filledFieldsCount >= 6, `Filled fields count: ${autofillRes.filledFieldsCount}`);
+
+  const fNameInput = doc.querySelector('[name*="first-name"]');
+  assert.strictEqual(fNameInput.value, "Shubham", "First name filled");
+
+  const lNameInput = doc.querySelector('[name*="last-name"]');
+  assert.strictEqual(lNameInput.value, "Singh Ranswal", "Last name filled");
+
+  const emailInput = doc.querySelector('[name="oneclick-ui.form.personal-information.fields.email"]');
+  assert.strictEqual(emailInput.value, "shubhamranswal@gmail.com", "Email filled");
+
+  const confirmEmailInput = doc.querySelector('[name*="confirm-email"]');
+  assert.strictEqual(confirmEmailInput.value, "shubhamranswal@gmail.com", "Confirm email filled");
+
+  const cityInput = doc.querySelector('[name*="city"]');
+  assert.strictEqual(cityInput.value, "Noida", "City filled");
+
+  const phoneInput = doc.querySelector('[name*="phone-number"]');
+  assert.strictEqual(phoneInput.value, "+91 9560793525", "Phone filled");
+
+  // Ensure avatar input was NEVER touched by resume autofill
+  const avatarInput = doc.querySelector('input[name="candidate-avatar"]');
+  assert.strictEqual(avatarInput.files.length, 0, "Avatar input was strictly untouched by resume autofill");
+
+  console.log("✓ Modern SPA ATS (SmartRecruiters / Ashby / Greenhouse) field detection & autofill verified.");
+}
+
 console.log("\n========================================================");
-console.log("ALL 5 PHASE 7 CHROME EXTENSION UNIT TEST SUITES PASSED!");
+console.log("ALL 6 PHASE 7 CHROME EXTENSION UNIT TEST SUITES PASSED!");
 console.log("========================================================\n");

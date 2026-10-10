@@ -20,9 +20,12 @@ export const ALLOWED_SAFE_FIELD_TYPES: ReadonlySet<SafeFieldType> = new Set<Safe
   "city",
   "state",
   "postalCode",
+  "country",
   "linkedin",
   "github",
   "website",
+  "resume",
+  "coverLetter",
 ]);
 
 // Sensitive keywords that immediately trigger an element blocklist
@@ -31,10 +34,14 @@ const SENSITIVE_KEYWORDS = [
   "passwd",
   "pwd",
   "secret",
-  "token",
-  "auth",
+  "auth_token",
+  "oauth_token",
+  "access_token",
+  "bearer_token",
   "csrf",
-  "session",
+  "xsrf",
+  "session_token",
+  "session_id",
   "cookie",
   "ssn",
   "socialsecurity",
@@ -49,18 +56,28 @@ const SENSITIVE_KEYWORDS = [
   "drivers_license",
   "pan_card",
   "pan_number",
-  "card",
   "creditcard",
   "credit_card",
+  "credit-card",
   "debit_card",
+  "debit-card",
+  "payment_card",
+  "card_number",
+  "cardnumber",
+  "cc_num",
+  "cc_number",
   "cvv",
   "cvc",
-  "bank",
-  "routing",
+  "bank_account",
+  "bank_routing",
+  "routing_number",
   "account_number",
   "iban",
   "swift",
-  "pin",
+  "security_pin",
+  "atm_pin",
+  "secret_pin",
+  "login_pin",
   "otp",
   "one_time_password",
   "one_time_code",
@@ -109,14 +126,15 @@ export function isElementSensitive(el: HTMLElement): boolean {
     return true;
   }
 
-  // 3. Inspect semantic identifiers (name, id, automationId, placeholder, aria-label, class)
+  // 3. Inspect semantic identifiers (name, id, automationId, placeholder, aria-label)
+  const safeClassName = typeof el.className === "string" ? el.className : "";
   const identifiers = [
     el.getAttribute("name"),
     el.id,
     el.getAttribute("data-automation-id"),
     el.getAttribute("aria-label"),
     el.getAttribute("placeholder"),
-    el.className,
+    safeClassName,
   ]
     .filter(Boolean)
     .join(" ")

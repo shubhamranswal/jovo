@@ -24,9 +24,12 @@ export type SafeFieldType =
   | "city"
   | "state"
   | "postalCode"
+  | "country"
   | "linkedin"
   | "github"
-  | "website";
+  | "website"
+  | "resume"
+  | "coverLetter";
 
 export interface DetectedFormField {
   name: string;
@@ -35,6 +38,7 @@ export interface DetectedFormField {
   confidence: number;
   selector: string;
   currentValue?: string;
+  element?: any;
 }
 
 export interface DetectedQuestion {

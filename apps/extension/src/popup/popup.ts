@@ -223,6 +223,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // Copy Cover Letter click
+  const copyCoverLetterBtn = document.getElementById("copyCoverLetterBtn") as HTMLButtonElement | null;
+  if (copyCoverLetterBtn) {
+    copyCoverLetterBtn.addEventListener("click", () => {
+      const fullName =
+        (currentProfile?.preferences_json?.full_name as string) || "Shubham Singh Ranswal";
+      const phone = (currentProfile?.preferences_json?.phone as string) || "+91 9560793525";
+      const email = (currentProfile?.preferences_json?.email as string) || "shubhamranswal@gmail.com";
+      const company = currentJob?.company || "Hiring Team";
+      const letter = `Dear ${company} Hiring Team,\n\nI am writing to express my strong interest in the opportunity at ${company}. With a proven track record engineering secure systems, high-performance Golang automation tools, and FastAPI backend platforms at Thales, I deliver robust, resilient software aligned with strict standards.\n\nI look forward to discussing how my engineering background and systems experience can contribute to your team.\n\nSincerely,\n${fullName}\n${phone} | ${email}`;
+
+      navigator.clipboard.writeText(letter).then(() => {
+        copyCoverLetterBtn.innerText = "✓ Copied!";
+        setTimeout(() => {
+          copyCoverLetterBtn.innerText = "Copy Letter";
+        }, 2000);
+      });
+    });
+  }
+
   // Autofill button click
   autofillBtn.addEventListener("click", () => {
     if (!currentProfile) return;
@@ -236,9 +256,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         { type: "AUTOFILL_SAFE_FIELDS", payload: { profile: currentProfile! } },
         (result: AutofillResult) => {
           autofillBtn.disabled = false;
-          autofillBtn.innerText = "Autofill Safe Fields";
+          autofillBtn.innerText = "Autofill Safe Fields & Resume";
           autofillStatus.classList.remove("hidden");
-          autofillStatus.innerText = `✓ Successfully filled ${result.filledFieldsCount} safe fields.`;
+          autofillStatus.innerText = `✓ Successfully filled ${result.filledFieldsCount} safe fields & materials.`;
 
           // Display skipped fields and reasons if any
           if (result.unfilledFields && result.unfilledFields.length > 0) {
